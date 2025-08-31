@@ -11,7 +11,7 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget{
       title: Center(child: 
         Text("Birthday App",
           style: TextStyle(
-            fontStyle: FontStyle.italic,
+            fontFamily: 'SF Pro Display',
             fontSize: 25,
             fontWeight: FontWeight.bold
           ),

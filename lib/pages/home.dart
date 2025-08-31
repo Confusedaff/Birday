@@ -1,4 +1,5 @@
 import 'package:bday/widgets/appbar.dart';
+import 'package:bday/widgets/empty.dart';
 import 'package:bday/widgets/floatingButton.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +10,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: Appbar(),
-      body: const Center(child: Text("Home")),
+      body: Empty(),
       floatingActionButton: Floatingbutton()
     );
   }
