@@ -1,3 +1,4 @@
+import 'package:bday/widgets/addbottomwidget.dart';
 import 'package:flutter/material.dart';
 
 class Floatingbutton extends StatefulWidget {
@@ -18,7 +19,10 @@ class _FloatingbuttonState extends State<Floatingbutton> {
           backgroundColor: Colors.deepPurple[200],
           shape: const CircleBorder(),
           onPressed: () {
-             print('FAB pressed!');
+            showModalBottomSheet(
+              context: context,
+              builder: (context) => const Addbottomwidget(),
+            );
           },
            child: const Icon(Icons.cake),
         ),

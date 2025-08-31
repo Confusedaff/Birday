@@ -7,7 +7,7 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget{
   Widget build(BuildContext context) {
     return AppBar(
       //backgroundColor: Colors.transparent,
-      backgroundColor: const Color.fromARGB(255, 199, 166, 255),
+      backgroundColor: const Color.fromARGB(255, 222, 202, 255),
       title: Center(child: 
         Text("Birthday App",
           style: TextStyle(
