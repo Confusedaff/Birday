@@ -11,15 +11,20 @@ class Floatingbutton extends StatefulWidget {
 class _FloatingbuttonState extends State<Floatingbutton> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Transform.scale(
       scale: 1,
       child: Padding(
-        padding:  const EdgeInsets.only(right: 10,bottom: 10),
+        padding:  const EdgeInsets.only(right:5,bottom: 10),
         child: FloatingActionButton.extended(
-          backgroundColor: Colors.deepPurple[200],
+          backgroundColor: theme.colorScheme.primary,
           //shape: const CircleBorder(),
-          icon: Icon(Icons.cake_rounded),
-          label: Text('Add Birthday'),
+          icon: Icon(Icons.cake_rounded,color: Colors.white,),
+          label: Text('Add Birthday',
+                  style: TextStyle(
+                    color: Colors.white
+                  ),
+          ),
           elevation: 8,
           onPressed: () {
             showModalBottomSheet(
