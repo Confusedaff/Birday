@@ -1,4 +1,6 @@
+import 'package:bday/widgets/draghandle.dart';
 import 'package:bday/widgets/selection.dart';
+import 'package:bday/widgets/singlebday.dart';
 import 'package:flutter/material.dart';
 
 class Addbottomwidget extends StatelessWidget {
@@ -17,8 +19,11 @@ class Addbottomwidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+
+        Draghandle(width: 36),
+
         Padding(
-          padding: const EdgeInsets.only(top: 20.0),
+          padding: const EdgeInsets.only(top: 5.0),
           child: Center(child: Text("Add Birthdays",style: TextStyle(fontSize: 25),)),
         ),
         Column(
@@ -26,7 +31,7 @@ class Addbottomwidget extends StatelessWidget {
           children: [
         
             SizedBox(
-              height: 7,
+              height: 5,
             ),
         
            Selection(
@@ -34,7 +39,10 @@ class Addbottomwidget extends StatelessWidget {
             title: 'Add Single Birthday',
             subtitle: 'Add one birthday manually',
             onTap: () { 
-              print("Prssed Single bday button");
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => const Singlebday(),
+              );
              }, 
             selectionBody: null,
             ),
