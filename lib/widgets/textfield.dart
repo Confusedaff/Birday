@@ -24,7 +24,7 @@ class _TextfieldState extends State<Textfield> {
     final theme = Theme.of(context);
    
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(top: 16.0,left: 16,right: 16,bottom: 8),
       child: TextField(
         controller: widget.controller,
         decoration: InputDecoration(
