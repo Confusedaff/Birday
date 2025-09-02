@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 class TimeSelector extends StatelessWidget {
   final double height;
   final double width;
-  final String placeholder; // what to show before a time is picked
+  final String placeholder; 
   final IconData icon;
-  final TimeOfDay? selectedTime; // the picked time (nullable)
+  final TimeOfDay? selectedTime;
   final VoidCallback tap;
   final bool is24HourFormat;
 
@@ -70,7 +70,7 @@ class TimeSelector extends StatelessWidget {
                   child: Text(
                     selectedTime != null
                         ? TimeUtils.formatTime(selectedTime!, is24HourFormat)
-                        : placeholder, // show time or placeholder
+                        : placeholder,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
@@ -131,7 +131,7 @@ class CustomTimePicker {
                 hourMinuteTextColor: theme.colorScheme.onSurfaceVariant,
                 dialBackgroundColor: theme.colorScheme.surfaceVariant,
                 dialHandColor: primaryColor ?? theme.colorScheme.primary,
-                dialTextColor: theme.colorScheme.onSurfaceVariant,
+                dialTextColor: Colors.white,
                 entryModeIconColor: theme.colorScheme.onSurfaceVariant,
                 dayPeriodColor: theme.colorScheme.primaryContainer,
                 dayPeriodTextColor: theme.colorScheme.onPrimaryContainer,

@@ -20,14 +20,8 @@ class BirthdayCard extends StatefulWidget {
 }
 
 class _BirthdayCardState extends State<BirthdayCard> {
-  late Birthday _birthday;
-
-  @override
-  void initState() {
-    super.initState();
-    _birthday = widget.birthday;
-  }
-
+  // Remove the local _birthday variable and use widget.birthday directly
+  
   void _showBirthdayDetails(Birthday birthday) {
     showDialog(
       context: context,
@@ -72,7 +66,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
               ),
               const SizedBox(height: 12),
               _buildDetailRow(
-                icon: Icons.upcoming_rounded,
+                icon: Icons.celebration_rounded,
                 label: 'Next Birthday',
                 value: birthday.isBirthdayToday 
                     ? 'Today! 🎉' 
@@ -162,9 +156,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
       
       if (index != -1) {
         await HiveBirthdayService.updateBirthday(index, updatedBirthday);
-        setState(() {
-          _birthday = updatedBirthday;
-        });
+        // Remove local state update since we're using widget.birthday directly
         widget.onUpdate?.call();
         
         if (mounted) {
@@ -266,6 +258,8 @@ class _BirthdayCardState extends State<BirthdayCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Use widget.birthday directly instead of _birthday
+    final birthday = widget.birthday;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -291,7 +285,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () => _showBirthdayDetails(_birthday),
+          onTap: () => _showBirthdayDetails(birthday),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -300,13 +294,13 @@ class _BirthdayCardState extends State<BirthdayCard> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: _birthday.isBirthdayToday 
+                    color: birthday.isBirthdayToday 
                         ? Colors.orange 
                         : theme.colorScheme.primary,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (_birthday.isBirthdayToday 
+                        color: (birthday.isBirthdayToday 
                             ? Colors.orange 
                             : theme.colorScheme.primary).withOpacity(0.3),
                         blurRadius: 8,
@@ -315,7 +309,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                     ],
                   ),
                   child: Icon(
-                    _birthday.isBirthdayToday 
+                    birthday.isBirthdayToday 
                         ? Icons.celebration_rounded 
                         : Icons.cake_rounded,
                     color: Colors.white,
@@ -329,7 +323,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                     children: [
                       const SizedBox(height: 10,),
                       Text(
-                        _birthday.name,
+                        birthday.name,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -337,17 +331,17 @@ class _BirthdayCardState extends State<BirthdayCard> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _birthday.isBirthdayToday
+                        birthday.isBirthdayToday
                             ? 'Happy Birthday! 🎉'
-                            : '${_birthday.daysUntilBirthday} days until birthday',
+                            : '${birthday.daysUntilBirthday} days until birthday',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
                         ),
                       ),
                       Text(
-                        _birthday.isBirthdayToday
-                            ? 'Now ${_birthday.age + 1} years old!'
-                            : 'Turning ${_birthday.age + 1}',
+                        birthday.isBirthdayToday
+                            ? 'Now ${birthday.age + 1} years old!'
+                            : 'Turning ${birthday.age + 1}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
                         ),
@@ -359,14 +353,14 @@ class _BirthdayCardState extends State<BirthdayCard> {
                   children: [
                     IconButton(
                       icon: Icon(
-                        _birthday.isReminderEnabled
+                        birthday.isReminderEnabled
                             ? Icons.notifications_active_rounded
                             : Icons.notifications_off_rounded,
-                        color: _birthday.isReminderEnabled 
+                        color: birthday.isReminderEnabled 
                             ? theme.colorScheme.primary 
                             : theme.colorScheme.outline,
                       ),
-                      onPressed: () => _showReminderSettings(_birthday),
+                      onPressed: () => _showReminderSettings(birthday),
                       tooltip: 'Reminder Settings',
                     ),
                     IconButton(
@@ -374,7 +368,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                         Icons.delete_rounded,
                         color: theme.colorScheme.error,
                       ),
-                      onPressed: () => _confirmDelete(_birthday),
+                      onPressed: () => _confirmDelete(birthday),
                       tooltip: 'Delete',
                     ),
                   ],
@@ -388,7 +382,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
   }
 }
 
-// Bottom sheet for reminder settings
+// Bottom sheet for reminder settings remains the same
 class _ReminderSettingsBottomSheet extends StatefulWidget {
   final Birthday birthday;
   final Function(Birthday) onSave;
