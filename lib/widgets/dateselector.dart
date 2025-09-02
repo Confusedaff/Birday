@@ -3,21 +3,25 @@ import 'package:flutter/material.dart';
 class Dateselector extends StatelessWidget {
   final double height;
   final double width;
-  final String text;
+  final String placeholder; // what to show before a date is picked
   final IconData icon;
+  final DateTime? selectedDate; // the picked date (nullable)
   final VoidCallback tap;
+
   const Dateselector({
     super.key,
     required this.height,
     required this.width,
-    required this.text,
-    required this.tap,
+    required this.placeholder,
     required this.icon,
+    required this.tap,
+    this.selectedDate,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -61,7 +65,9 @@ class Dateselector extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 16.0),
                 child: Text(
-                  text,
+                  selectedDate != null
+                      ? DateUtils.formatDateReadable(selectedDate!)
+                      : placeholder, // show date or placeholder
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
@@ -84,7 +90,6 @@ class Dateselector extends StatelessWidget {
     );
   }
 }
-
 /// A reusable date picker widget with custom styling
 class CustomDatePicker {
   /// Shows a styled date picker dialog
