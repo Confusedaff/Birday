@@ -61,7 +61,7 @@ class Copybd {
             onPressed: () {
               String text = textController.text.trim();
               if (text.isNotEmpty) {
-                Navigator.pop(context);
+                Navigator.of(context).popUntil((route) => route.isFirst);
                 _importBirthdaysFromText(context, text);
               }
             },

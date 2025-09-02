@@ -60,7 +60,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
               _buildDetailRow(
                 icon: Icons.numbers_rounded,
                 label: 'Current Age',
-                value: '${birthday.age+1} years old',
+                value: '${birthday.age} years old',
                 theme: theme,
               ),
               const SizedBox(height: 12),
@@ -69,7 +69,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                 label: 'Next Birthday',
                 value: birthday.isBirthdayToday 
                     ? 'Today! 🎉' 
-                    : '${birthday.daysUntilBirthday} days (turning ${birthday.age + 1})',
+                    : '${birthday.daysUntilBirthday} days (turning ${birthday.age})',
                 theme: theme,
               ),
               if (birthday.alarmTime != null) ...[
@@ -338,7 +338,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                       ),
                       Text(
                         birthday.isBirthdayToday
-                            ? 'Now ${birthday.age + 1} years old!'
+                            ? 'Now ${birthday.age} years old!'
                             : 'Turning ${birthday.age + 1}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
