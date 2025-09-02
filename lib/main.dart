@@ -7,11 +7,12 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme:ThemeData(
+      theme: ThemeData(
         primarySwatch: Colors.purple,
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -28,9 +29,9 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'SF Pro Display',
       ),
+      themeMode: ThemeMode.system, // This enables automatic theme switching
       debugShowCheckedModeBanner: false,
       home: const HomePage(),
     );
   }
 }
-

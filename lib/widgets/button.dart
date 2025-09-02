@@ -7,30 +7,46 @@ class Button extends StatelessWidget {
     super.key,
     required this.text,
     required this.tap,
-    });
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      height: 65,
-      width: 185,
-      decoration: BoxDecoration(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: tap,
         borderRadius: BorderRadius.circular(25),
-        color: theme.colorScheme.primary.withOpacity(0.9),
+        child: Container(
+          height: 65,
+          width: 185,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(25),
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withOpacity(0.8),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
+          ),
+        ),
       ),
-      child: Center(
-        child: GestureDetector(
-          onTap: tap,
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Colors.white//theme.colorScheme.primary.withOpacity(0.1),
-            ),
-            ),
-        )),
     );
   }
 }

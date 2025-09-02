@@ -13,52 +13,78 @@ class Dateselector extends StatelessWidget {
     required this.text,
     required this.tap,
     required this.icon,
-    });
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: tap,
-      child: Container(
-        height: height,//65,
-        width: width,//380,
-        decoration: BoxDecoration(
-          //color: theme.colorScheme.primary,
-          borderRadius: BorderRadius.circular(18),
-          border: BoxBorder.all(
-            color:  const Color.fromARGB(255, 117, 111, 111),//theme.colorScheme.primary,
-            width: 3.5,
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: tap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: theme.colorScheme.outline,
+              width: 2.0,
             ),
+            color: theme.colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.shadow.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    size: 24,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(
+                  text,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  size: 16,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          children: [
-      
-            Padding(
-              padding: const EdgeInsets.only(left:10.0),
-              child: Icon(
-                icon,//Icons.cake_rounded,
-                color:  const Color.fromARGB(255, 101, 101, 101),
-                size: 28,
-                ),
-            ),
-      
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Text(
-                text,//"Select Birth Date",
-                style: TextStyle(
-                  fontSize: 18,
-                  color:  const Color.fromARGB(255, 101, 101, 101),
-                  fontWeight: FontWeight.w400
-                ),
-                ),
-            )
-          ],
-        )
       ),
     );
   }
 }
+
 /// A reusable date picker widget with custom styling
 class CustomDatePicker {
   /// Shows a styled date picker dialog
@@ -74,7 +100,7 @@ class CustomDatePicker {
     double borderRadius = 20.0,
   }) async {
     final theme = Theme.of(context);
-    
+
     return await showDatePicker(
       context: context,
       initialDate: initialDate ?? DateTime.now(),
@@ -114,7 +140,6 @@ class CustomDatePicker {
   }
 }
 
-
 /// Utility class for date operations
 class DateUtils {
   /// Calculate days between two dates
@@ -127,9 +152,9 @@ class DateUtils {
   /// Check if a date is today
   static bool isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && 
-           date.month == now.month && 
-           date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   /// Check if a date is in the future
@@ -156,7 +181,7 @@ class DateUtils {
   static int calculateAge(DateTime birthDate) {
     final now = DateTime.now();
     int age = now.year - birthDate.year;
-    if (now.month < birthDate.month || 
+    if (now.month < birthDate.month ||
         (now.month == birthDate.month && now.day < birthDate.day)) {
       age--;
     }
@@ -168,7 +193,7 @@ class DateUtils {
     final now = DateTime.now();
     final thisYear = DateTime(now.year, birthDate.month, birthDate.day);
     final nextYear = DateTime(now.year + 1, birthDate.month, birthDate.day);
-    
+
     if (thisYear.isAfter(now) || thisYear.isAtSameMomentAs(now)) {
       return thisYear.difference(now).inDays;
     } else {

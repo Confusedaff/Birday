@@ -15,20 +15,24 @@ class _FloatingbuttonState extends State<Floatingbutton> {
     return Transform.scale(
       scale: 1,
       child: Padding(
-        padding:  const EdgeInsets.only(right:5,bottom: 10),
+        padding: const EdgeInsets.only(right: 5, bottom: 10),
         child: FloatingActionButton.extended(
           backgroundColor: theme.colorScheme.primary,
-          //shape: const CircleBorder(),
-          icon: Icon(Icons.cake_rounded,color: Colors.white,),
-          label: Text('Add Birthday',
-                  style: TextStyle(
-                    color: Colors.white
-                  ),
+          foregroundColor: theme.colorScheme.onPrimary,
+          icon: const Icon(Icons.cake_rounded),
+          label: Text(
+            'Add Birthday',
+            style: TextStyle(
+              color: theme.colorScheme.onPrimary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           elevation: 8,
           onPressed: () {
             showModalBottomSheet(
               context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
               builder: (context) => const Addbottomwidget(),
             );
           },
