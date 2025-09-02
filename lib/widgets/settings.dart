@@ -1,3 +1,4 @@
+import 'package:bday/storage/hive_service.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -265,6 +266,31 @@ class _SettingspageState extends State<Settingspage> {
     );
   }
 
+  Future<void> _deleteAllBirthdays() async {
+  try {
+    await HiveBirthdayService.clearAllBirthdays();
+    //widget.onDelete?.call();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All birthdays deleted'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete all birthdays: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
   void _showClearDataDialog(BuildContext context) {
     final theme = Theme.of(context);
     
@@ -300,17 +326,17 @@ class _SettingspageState extends State<Settingspage> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Handle clear data action
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('All data cleared'),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              );
+              _deleteAllBirthdays();
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   SnackBar(
+              //     content: const Text('All data cleared'),
+              //     backgroundColor: Colors.red,
+              //     behavior: SnackBarBehavior.floating,
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(8),
+              //     ),
+              //   ),
+              // );
             },
             child: const Text(
               'Delete',

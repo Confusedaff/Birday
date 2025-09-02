@@ -65,24 +65,6 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pop(context);
                   },
                 ),
-                // _buildDrawerItem(
-                //   context,
-                //   icon: Icons.cake_rounded,
-                //   title: 'My Birthdays',
-                //   onTap: () {
-                //     Navigator.pop(context);
-                //     // Navigate to birthdays list
-                //   },
-                // ),
-                // _buildDrawerItem(
-                //   context,
-                //   icon: Icons.notifications_rounded,
-                //   title: 'Notifications',
-                //   onTap: () {
-                //     Navigator.pop(context);
-                //     // Navigate to notifications settings
-                //   },
-                // ),
                 _buildDrawerItem(
                   context,
                   icon: Icons.import_export_rounded,
@@ -111,7 +93,7 @@ class AppDrawer extends StatelessWidget {
                   title: 'Help & Support',
                   onTap: () {
                     Navigator.pop(context);
-                    // Navigate to help
+                    _showHelpDialog(context);
                   },
                 ),
                 _buildDrawerItem(
@@ -120,7 +102,6 @@ class AppDrawer extends StatelessWidget {
                   title: 'About',
                   onTap: () {
                     Navigator.pop(context);
-                    // Show about dialog
                     _showAboutDialog(context);
                   },
                 ),
@@ -198,6 +179,37 @@ class AppDrawer extends StatelessWidget {
         content: const Text(
           'Birthday App helps you remember and celebrate important birthdays. '
           'Never miss a birthday again with our easy-to-use reminder system.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cake_rounded,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            const Text('Help'),
+          ],
+        ),
+        content: const Text(
+         '   Thalle oru 10 roopa ido🥹',
+         style: TextStyle(fontSize: 20),
         ),
         actions: [
           TextButton(

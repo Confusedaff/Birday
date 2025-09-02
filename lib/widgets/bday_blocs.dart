@@ -258,7 +258,6 @@ class _BirthdayCardState extends State<BirthdayCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Use widget.birthday directly instead of _birthday
     final birthday = widget.birthday;
     
     return Container(

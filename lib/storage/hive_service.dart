@@ -65,6 +65,10 @@ class HiveBirthdayService {
     }
   }
 
+  static Future<void> clearAllBirthdays() async {
+    await box.clear();
+  }
+
   // Close the box
   static Future<void> close() async {
     await _box?.close();
