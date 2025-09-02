@@ -1,16 +1,18 @@
 import 'package:bday/pages/home.dart';
+import 'package:bday/storage/hive_service.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  await Hive.openBox('theme');
-    
-   runApp(
+  await Hive.openBox('theme');        
+  await HiveBirthdayService.init(); 
+
+  runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
       child: const MyApp(),

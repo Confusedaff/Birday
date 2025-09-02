@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 class Button extends StatelessWidget {
   final String text;
-  final VoidCallback tap;
+  final VoidCallback? tap;
   const Button({
     super.key,
     required this.text,
-    required this.tap,
+    this.tap,
   });
 
   @override
