@@ -1,3 +1,4 @@
+import 'package:bday/widgets/copybd.dart';
 import 'package:bday/widgets/draghandle.dart';
 import 'package:bday/widgets/selection.dart';
 import 'package:bday/widgets/singlebday.dart';
@@ -61,8 +62,8 @@ class Addbottomwidget extends StatelessWidget {
                 icon: Icons.edit_rounded,
                 title: 'Import from Text',
                 subtitle: 'Paste or type multiple birthdays',
-                onTap: () {
-                  print("Pressed Import button");
+                 onTap: () {
+                  Copybd.showTextImportDialog(context);
                 },
                 selectionBody: null,
               ),
@@ -72,4 +73,5 @@ class Addbottomwidget extends StatelessWidget {
       ),
     );
   }
+  
 }

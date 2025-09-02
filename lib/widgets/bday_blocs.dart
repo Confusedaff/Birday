@@ -20,7 +20,6 @@ class BirthdayCard extends StatefulWidget {
 }
 
 class _BirthdayCardState extends State<BirthdayCard> {
-  // Remove the local _birthday variable and use widget.birthday directly
   
   void _showBirthdayDetails(Birthday birthday) {
     showDialog(

@@ -20,30 +20,40 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     _loadBirthdays();
   }
 
-  Future<void> _loadBirthdays() async {
-    try {
-      final birthdays = HiveBirthdayService.getAllBirthdays();
-      // Sort birthdays by upcoming birthday date
-      birthdays.sort((a, b) => a.daysUntilBirthday.compareTo(b.daysUntilBirthday));
-      
-      setState(() {
-        _birthdays = birthdays;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load birthdays: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      Future<void> _loadBirthdays() async {
+      try {
+        final birthdays = HiveBirthdayService.getAllBirthdays();
+
+        birthdays.sort((a, b) {
+      if (a.isBirthdayToday && !b.isBirthdayToday) return -1;
+      if (!a.isBirthdayToday && b.isBirthdayToday) return 1;
+
+      if (a.isBirthdayToday && b.isBirthdayToday) {
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       }
+
+      return a.daysUntilBirthday.compareTo(b.daysUntilBirthday);
+    });
+
+    setState(() {
+      _birthdays = birthdays;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isLoading = false;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load birthdays: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
+
 
   Future<void> _refreshBirthdays() async {
     await _loadBirthdays();
