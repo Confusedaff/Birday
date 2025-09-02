@@ -9,15 +9,25 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
       elevation: 0,
-      title: Center(
-        child: Text(
+      centerTitle: true,
+      title: Text(
           "Birthday App",
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.primary,
           ),
         ),
-      ),
+      leading: Builder(
+            builder: (context) => IconButton(
+                  icon: Icon(
+                    Icons.menu,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                  onPressed: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                ),
+              ),
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
