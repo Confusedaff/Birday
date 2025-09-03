@@ -23,8 +23,11 @@ class Birthday extends HiveObject {
   @HiveField(5)
   String? alarmId;
 
-  @HiveField(6, defaultValue: false) // 👈 ensure default
+  @HiveField(6, defaultValue: false)
   bool isReminderEnabled;
+
+  @HiveField(7)
+  String? profileImagePath;
 
   Birthday({
     required this.name,
@@ -33,10 +36,10 @@ class Birthday extends HiveObject {
     this.alarmTimeHour,
     this.alarmTimeMinute,
     this.alarmId,
-    this.isReminderEnabled = false,   // 👈 constructor default
+    this.isReminderEnabled = false,
+    this.profileImagePath,
   });
 
-  // Helper method to get TimeOfDay from stored strings
   TimeOfDay? get alarmTime {
     if (alarmTimeHour != null && alarmTimeMinute != null) {
       return TimeOfDay(

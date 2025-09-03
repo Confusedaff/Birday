@@ -24,13 +24,14 @@ class BirthdayAdapter extends TypeAdapter<Birthday> {
       alarmTimeMinute: fields[4] as String?,
       alarmId: fields[5] as String?,
       isReminderEnabled: fields[6] == null ? false : fields[6] as bool,
+      profileImagePath: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Birthday obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class BirthdayAdapter extends TypeAdapter<Birthday> {
       ..writeByte(5)
       ..write(obj.alarmId)
       ..writeByte(6)
-      ..write(obj.isReminderEnabled);
+      ..write(obj.isReminderEnabled)
+      ..writeByte(7)
+      ..write(obj.profileImagePath);
   }
 
   @override

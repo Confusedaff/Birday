@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/widgets/timeselector.dart';
+import 'package:image_picker/image_picker.dart';
 
 class BirthdayCard extends StatefulWidget {
   final Birthday birthday;
@@ -20,6 +23,19 @@ class BirthdayCard extends StatefulWidget {
 }
 
 class _BirthdayCardState extends State<BirthdayCard> {
+
+Future<void> _pickProfilePicture(Birthday birthday) async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  if (pickedFile != null) {
+    birthday.profileImagePath = pickedFile.path;
+    await birthday.save();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+}
   
   void _showBirthdayDetails(Birthday birthday) {
     showDialog(
@@ -225,7 +241,6 @@ class _BirthdayCardState extends State<BirthdayCard> {
 
   Future<void> _deleteBirthday(Birthday birthday) async {
     try {
-      // Find the index and delete
       final allBirthdays = HiveBirthdayService.getAllBirthdays();
       final index = allBirthdays.indexWhere((b) => b.key == birthday.key);
       
@@ -288,30 +303,41 @@ class _BirthdayCardState extends State<BirthdayCard> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: birthday.isBirthdayToday 
-                        ? Colors.orange 
-                        : theme.colorScheme.primary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (birthday.isBirthdayToday 
-                            ? Colors.orange 
-                            : theme.colorScheme.primary).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    birthday.isBirthdayToday 
-                        ? Icons.celebration_rounded 
-                        : Icons.cake_rounded,
-                    color: Colors.white,
-                    size: 30,
+                GestureDetector(
+                  onLongPress: () => _pickProfilePicture(birthday),
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: birthday.isBirthdayToday 
+                          ? Colors.orange 
+                          : theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        // BoxShadow(
+                        //   color: (birthday.isBirthdayToday 
+                        //       ? Colors.orange 
+                        //       : theme.colorScheme.primary).withOpacity(0.3),
+                        //   blurRadius: 8,
+                        //   offset: const Offset(0, 4),
+                        // ),
+                      ],
+                      image: birthday.profileImagePath != null
+                          ? DecorationImage(
+                              image: FileImage(File(birthday.profileImagePath!)),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: birthday.profileImagePath == null
+                        ? Icon(
+                            birthday.isBirthdayToday 
+                                ? Icons.celebration_rounded 
+                                : Icons.cake_rounded,
+                            color: Colors.white,
+                            size: 30,
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -380,7 +406,6 @@ class _BirthdayCardState extends State<BirthdayCard> {
   }
 }
 
-// Bottom sheet for reminder settings remains the same
 class _ReminderSettingsBottomSheet extends StatefulWidget {
   final Birthday birthday;
   final Function(Birthday) onSave;
