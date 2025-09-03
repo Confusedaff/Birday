@@ -69,7 +69,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                 label: 'Next Birthday',
                 value: birthday.isBirthdayToday 
                     ? 'Today! 🎉' 
-                    : '${birthday.daysUntilBirthday} days (turning ${birthday.age})',
+                    : '${birthday.daysUntilBirthday+1} days (turning ${birthday.age})',
                 theme: theme,
               ),
               if (birthday.alarmTime != null) ...[
@@ -331,7 +331,7 @@ class _BirthdayCardState extends State<BirthdayCard> {
                       Text(
                         birthday.isBirthdayToday
                             ? 'Happy Birthday! 🎉'
-                            : '${birthday.daysUntilBirthday} days until birthday',
+                            : '${birthday.daysUntilBirthday + 1} days until birthday',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
                         ),
