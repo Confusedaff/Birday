@@ -3,6 +3,7 @@ import 'package:bday/storage/conservice.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/notification.dart';
 import 'package:bday/themes/themeprovider.dart';
+import 'package:bday/widgets/remainder.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,8 @@ void main() async {
   await HiveBirthdayService.init(); 
   await SettingsService.init();
   await NotiService().initNotification();
+  
+  await BirthdayReminder.scheduleAllReminders();
 
   runApp(
     ChangeNotifierProvider(

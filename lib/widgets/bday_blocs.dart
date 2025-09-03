@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bday/widgets/remainder.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
@@ -240,6 +241,8 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
   }
 
   Future<void> _deleteBirthday(Birthday birthday) async {
+    final reminder = BirthdayReminder();
+    await reminder.cancelBirthdayReminders(birthday);
     try {
       final allBirthdays = HiveBirthdayService.getAllBirthdays();
       final index = allBirthdays.indexWhere((b) => b.key == birthday.key);
@@ -533,53 +536,54 @@ class _ReminderSettingsBottomSheetState extends State<_ReminderSettingsBottomShe
   }
 
   void _saveSettings() async {
-    try {
-      // Update the existing Birthday object directly
-      widget.birthday.isReminderEnabled = _isReminderEnabled;
-      
-      if (_isReminderEnabled && _reminderTime != null) {
-        widget.birthday.setAlarmTime(_reminderTime!);
-        // Set alarm date to the next birthday
-        widget.birthday.alarmDate = widget.birthday.nextBirthday;
-      } else {
-        // Clear alarm data if reminder is disabled
-        widget.birthday.alarmTimeHour = null;
-        widget.birthday.alarmTimeMinute = null;
-        widget.birthday.alarmDate = null;
-      }
+  try {
+    // Update the existing Birthday object directly
+    widget.birthday.isReminderEnabled = _isReminderEnabled;
+    
+    if (_isReminderEnabled && _reminderTime != null) {
+      widget.birthday.setAlarmTime(_reminderTime!);
+      widget.birthday.alarmDate = widget.birthday.nextBirthday;
+    } else {
+      widget.birthday.alarmTimeHour = null;
+      widget.birthday.alarmTimeMinute = null;
+      widget.birthday.alarmDate = null;
+    }
 
-      // Save to Hive
-      await widget.birthday.save();
+    // Save to Hive
+    await widget.birthday.save();
 
-      // Call the onSave callback to refresh parent widget
-      widget.onSave(widget.birthday);
+    // Schedule notifications after saving
+    final reminder = BirthdayReminder();
+    await reminder.scheduleBirthdayReminders(widget.birthday);
+
+    // Call the onSave callback to refresh parent widget
+    widget.onSave(widget.birthday);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isReminderEnabled 
+              ? 'Reminder set for ${widget.birthday.name}'
+              : 'Reminder disabled for ${widget.birthday.name}',
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
       
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isReminderEnabled 
-                ? 'Reminder set for ${widget.birthday.name}'
-                : 'Reminder disabled for ${widget.birthday.name}',
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save reminder: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      Navigator.of(context).pop();
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save reminder: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
+}
 }
