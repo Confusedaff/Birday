@@ -1,3 +1,4 @@
+import 'package:bday/storage/conservice.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:flutter/cupertino.dart';
@@ -53,7 +54,6 @@ class _SettingspageState extends State<Settingspage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Theme Settings Section
             _buildSettingsSection(
               context,
               title: "Appearance",
@@ -75,12 +75,25 @@ class _SettingspageState extends State<Settingspage> {
                     activeColor: theme.colorScheme.primary,
                   ),
                 ),
+                  _buildSettingsTile(
+                  context,
+                  icon: Icons.celebration_rounded,
+                  title: "Confetti",
+                  subtitle: "Turn confetti On/Off",
+                  trailing: CupertinoSwitch(
+                    value: SettingsService.getConfettiEnabled(),
+                    onChanged: (value) async {
+                      await SettingsService.setConfettiEnabled(value);
+                      setState(() {});
+                    },
+                    activeColor: theme.colorScheme.primary,
+                  ),
+                ),
               ],
             ),
             
             const SizedBox(height: 20),
             
-            // General Settings Section
             _buildSettingsSection(
               context,
               title: "General",

@@ -1,4 +1,5 @@
 import 'package:bday/pages/home.dart';
+import 'package:bday/storage/conservice.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('theme');        
   await HiveBirthdayService.init(); 
+  await SettingsService.init();
 
   runApp(
     ChangeNotifierProvider(

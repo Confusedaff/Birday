@@ -1,4 +1,6 @@
+import 'package:bday/storage/conservice.dart';
 import 'package:bday/widgets/bday_blocs.dart';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
@@ -13,32 +15,54 @@ class BirthdayListScreen extends StatefulWidget {
 class _BirthdayListScreenState extends State<BirthdayListScreen> {
   List<Birthday> _birthdays = [];
   bool _isLoading = true;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 5));
     _loadBirthdays();
   }
 
-      Future<void> _loadBirthdays() async {
-      try {
-        final birthdays = HiveBirthdayService.getAllBirthdays();
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
-        birthdays.sort((a, b) {
+  Future<void> _loadBirthdays() async {
+  try {
+    final birthdays = HiveBirthdayService.getAllBirthdays();
+    birthdays.sort((a, b) {
       if (a.isBirthdayToday && !b.isBirthdayToday) return -1;
       if (!a.isBirthdayToday && b.isBirthdayToday) return 1;
-
       if (a.isBirthdayToday && b.isBirthdayToday) {
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       }
-
       return a.daysUntilBirthday.compareTo(b.daysUntilBirthday);
     });
-
+    
     setState(() {
       _birthdays = birthdays;
       _isLoading = false;
     });
+   
+    if (_birthdays.any((b) => b.isBirthdayToday) &&
+        SettingsService.getConfettiEnabled() &&
+        SettingsService.shouldPlayConfettiToday()) {
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) {
+          _confettiController.play();
+          
+          // Mark confetti as played today
+          final today = DateTime.now().toIso8601String().split('T')[0];
+          await SettingsService.setLastConfettiDate(today);
+        }
+      });
+    }
+    
   } catch (e) {
     setState(() {
       _isLoading = false;
@@ -75,9 +99,25 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      body: _birthdays.isEmpty 
-          ? _buildEmptyState(theme)
-          : _buildBirthdayList(theme),
+      body: Stack(
+        children: [
+          _birthdays.isEmpty
+              ? _buildEmptyState(theme)
+              : _buildBirthdayList(theme),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              numberOfParticles: 40,
+              maxBlastForce: 20,
+              minBlastForce: 5,
+              emissionFrequency: 0.05,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -116,7 +156,6 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
       onRefresh: _refreshBirthdays,
       child: Column(
         children: [
-          // Stats header
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(20),
@@ -151,7 +190,10 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                 _buildStatItem(
                   icon: Icons.celebration_rounded,
                   label: 'Today',
-                  value: _birthdays.where((b) => b.isBirthdayToday).length.toString(),
+                  value: _birthdays
+                      .where((b) => b.isBirthdayToday)
+                      .length
+                      .toString(),
                   theme: theme,
                 ),
                 Container(
@@ -162,14 +204,15 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                 _buildStatItem(
                   icon: Icons.upcoming_rounded,
                   label: 'This Week',
-                  value: _birthdays.where((b) => b.daysUntilBirthday <= 7).length.toString(),
+                  value: _birthdays
+                      .where((b) => b.daysUntilBirthday <= 7)
+                      .length
+                      .toString(),
                   theme: theme,
                 ),
               ],
             ),
           ),
-          
-          // Birthday list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
