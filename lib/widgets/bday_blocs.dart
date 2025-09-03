@@ -422,14 +422,14 @@ class _ReminderSettingsBottomSheet extends StatefulWidget {
 class _ReminderSettingsBottomSheetState extends State<_ReminderSettingsBottomSheet> {
   late bool _isReminderEnabled;
   late TimeOfDay? _reminderTime;
-  late DateTime? _reminderDate;
+  //late DateTime? _reminderDate;
 
   @override
   void initState() {
     super.initState();
     _isReminderEnabled = widget.birthday.isReminderEnabled;
     _reminderTime = widget.birthday.alarmTime;
-    _reminderDate = widget.birthday.alarmDate;
+    //_reminderDate = widget.birthday.alarmDate;
   }
 
   @override
@@ -477,13 +477,17 @@ class _ReminderSettingsBottomSheetState extends State<_ReminderSettingsBottomShe
             onChanged: (value) {
               setState(() {
                 _isReminderEnabled = value;
+                // Clear time if reminder is disabled
+                if (!value) {
+                  _reminderTime = null;
+                }
               });
             },
           ),
           if (_isReminderEnabled) ...[
             const SizedBox(height: 16),
             ListTile(
-              leading: Icon(Icons.access_time_rounded),
+              leading: const Icon(Icons.access_time_rounded),
               title: const Text('Reminder Time'),
               subtitle: Text(
                 _reminderTime != null
@@ -528,20 +532,54 @@ class _ReminderSettingsBottomSheetState extends State<_ReminderSettingsBottomShe
     );
   }
 
-  void _saveSettings() {
-    final updatedBirthday = Birthday(
-      name: widget.birthday.name,
-      birthDate: widget.birthday.birthDate,
-      alarmDate: _reminderDate,
-      alarmId: widget.birthday.alarmId,
-      isReminderEnabled: _isReminderEnabled,
-    );
-    
-    if (_reminderTime != null) {
-      updatedBirthday.setAlarmTime(_reminderTime!);
+  void _saveSettings() async {
+    try {
+      // Update the existing Birthday object directly
+      widget.birthday.isReminderEnabled = _isReminderEnabled;
+      
+      if (_isReminderEnabled && _reminderTime != null) {
+        widget.birthday.setAlarmTime(_reminderTime!);
+        // Set alarm date to the next birthday
+        widget.birthday.alarmDate = widget.birthday.nextBirthday;
+      } else {
+        // Clear alarm data if reminder is disabled
+        widget.birthday.alarmTimeHour = null;
+        widget.birthday.alarmTimeMinute = null;
+        widget.birthday.alarmDate = null;
+      }
+
+      // Save to Hive
+      await widget.birthday.save();
+
+      // Call the onSave callback to refresh parent widget
+      widget.onSave(widget.birthday);
+      
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isReminderEnabled 
+                ? 'Reminder set for ${widget.birthday.name}'
+                : 'Reminder disabled for ${widget.birthday.name}',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save reminder: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
-    
-    widget.onSave(updatedBirthday);
-    Navigator.of(context).pop();
   }
 }

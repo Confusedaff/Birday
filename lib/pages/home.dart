@@ -47,7 +47,13 @@ class _HomePageState extends State<HomePage> {
           }
         },
       ),
-      floatingActionButton: Floatingbutton(),
+      floatingActionButton:Floatingbutton(),//FloatingActionButton(
+      //   onPressed:() {
+      //    NotiService().showNotification(
+      // title: "Hello 🎉",
+      // body: "This is a test notification",);
+      //   }
+      //   )
     );
   }
 }
