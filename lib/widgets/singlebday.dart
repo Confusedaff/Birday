@@ -3,6 +3,7 @@ import 'package:bday/storage/hive_service.dart';
 import 'package:bday/widgets/button.dart';
 import 'package:bday/widgets/dateselector.dart';
 import 'package:bday/widgets/dragHandle.dart';
+import 'package:bday/widgets/remainder.dart';
 import 'package:bday/widgets/textfield.dart';
 import 'package:bday/widgets/timeselector.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,6 @@ class _SinglebdayState extends State<Singlebday> {
   }
 
   Future<void> _saveInput() async {
-    // Validate input
     if (nameController.text.trim().isEmpty) {
       _showErrorDialog('Please enter a name');
       return;
@@ -42,50 +42,45 @@ class _SinglebdayState extends State<Singlebday> {
 
     setState(() => _isSaving = true);
 
-    try {
-      // Create birthday object
-      final birthday = Birthday(
-        name: nameController.text.trim(),
-        birthDate: birthDate!,
-        alarmDate: selectedAlarmDate,
-        alarmId: selectedAlarmTime != null ? DateTime.now().millisecondsSinceEpoch.toString() : null,
+  try {
+    final birthday = Birthday(
+      name: nameController.text.trim(),
+      birthDate: birthDate!,
+      alarmDate: selectedAlarmDate,
+      alarmId: selectedAlarmTime != null ? DateTime.now().millisecondsSinceEpoch.toString() : null,
+      isReminderEnabled: selectedAlarmTime != null,
+    );
+    if (selectedAlarmTime != null) {
+      birthday.setAlarmTime(selectedAlarmTime!);
+    }
+
+    await HiveBirthdayService.addBirthday(birthday);
+
+    if (birthday.isReminderEnabled) {
+      final reminder = BirthdayReminder();
+      await reminder.scheduleBirthdayReminders(birthday);
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Birthday for ${birthday.name} saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
       );
 
-      // Set alarm time if selected
-      if (selectedAlarmTime != null) {
-        birthday.setAlarmTime(selectedAlarmTime!);
-      }
-
-      // Save to Hive
-      await HiveBirthdayService.addBirthday(birthday);
-
-      // Create yearly alarm if time is set
-      if (selectedAlarmTime != null && selectedAlarmDate != null) {
-        await createYearlyAlarm(birthday.alarmId!);
-      }
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Birthday for ${birthday.name} saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Navigate back
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorDialog('Failed to save birthday: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  } catch (e) {
+    if (mounted) {
+      _showErrorDialog('Failed to save birthday: ${e.toString()}');
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isSaving = false);
     }
   }
+}
 
   Future<void> createYearlyAlarm(String alarmId) async {
     if (selectedAlarmTime != null && selectedAlarmDate != null) {
@@ -193,7 +188,6 @@ class _SinglebdayState extends State<Singlebday> {
                     icon: Icons.alarm_add_rounded,
                     selectedTime: selectedAlarmTime,
                     tap: () async {
-                      // First pick the date
                       final date = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
@@ -202,7 +196,6 @@ class _SinglebdayState extends State<Singlebday> {
                       );
                       
                       if (date != null) {
-                        // Then pick the time
                         final time = await CustomTimePicker.showCustomTimePicker(
                           context: context,
                           helpText: 'Set Yearly Alarm Time',

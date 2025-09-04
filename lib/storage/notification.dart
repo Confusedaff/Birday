@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart'; // Add this dependency
+import 'package:flutter_timezone/flutter_timezone.dart'; 
 
 class NotiService {
   NotiService._internal();
@@ -14,31 +14,46 @@ class NotiService {
   bool _isInitialized = false;
 
   Future<void> initNotification() async {
-    if (_isInitialized) return;
+  if (_isInitialized) return;
 
-    // Proper timezone initialization
-    tz.initializeTimeZones();
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
-
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidSettings);
-
-    await notificationsPlugin.initialize(initSettings);
-    _isInitialized = true;
-
-    // Request permissions with proper handling
-    final androidImplementation = notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    final granted = await androidImplementation?.requestNotificationsPermission();
-    
-    if (granted != true) {
-      print('Notification permission denied');
-      // Handle permission denial - maybe show a dialog to the user
+    String normalizeTimeZone(String name) {
+    switch (name) {
+      case "Asia/Calcutta":
+        return "Asia/Kolkata";
+      default:
+        return name;
     }
   }
+
+  tz.initializeTimeZones();
+
+  try {
+    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+    final normalized = normalizeTimeZone(timeZoneName);
+    print("Device timezone: $timeZoneName → using $normalized");
+    tz.setLocalLocation(tz.getLocation(normalized));
+  } catch (e) {
+    print("⚠️ Failed to get timezone, falling back to UTC. Error: $e");
+    tz.setLocalLocation(tz.getLocation("UTC"));
+  }
+
+  const androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const initSettings = InitializationSettings(android: androidSettings);
+
+  await notificationsPlugin.initialize(initSettings);
+  _isInitialized = true;
+
+  final androidImplementation = notificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+  final granted =
+      await androidImplementation?.requestNotificationsPermission();
+
+  if (granted != true) {
+    print('Notification permission denied');
+  }
+}
 
   NotificationDetails notificationDetails() {
     return const NotificationDetails(
@@ -54,20 +69,16 @@ class NotiService {
     );
   }
 
-  // Cancel notification by ID
   Future<void> cancelNotification(int id) async {
     await notificationsPlugin.cancel(id);
   }
 
-  // Cancel all notifications for a birthday
   Future<void> cancelBirthdayNotifications(int birthdayKey) async {
-    // Cancel all 4 reminder notifications (30 days, 15 days, 1 day, same day)
     for (int i = 0; i < 4; i++) {
       await cancelNotification(birthdayKey.hashCode + i);
     }
   }
 
-  // Show immediate notification
   Future<void> showNotification({
     int id = 0,
     String? title,
@@ -81,15 +92,15 @@ class NotiService {
     );
   }
 
-  Future<void> scheduleYearlyNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime scheduledDate,
-  }) async {
+ Future<void> scheduleYearlyNotification({
+  required int id,
+  required String title,
+  required String body,
+  required DateTime scheduledDate,
+}) async {
+  try {
     final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
-    // Check if the date is in the future
     if (tzDate.isBefore(tz.TZDateTime.now(tz.local))) {
       print('Skipping past notification for $scheduledDate');
       return;
@@ -104,5 +115,9 @@ class NotiService {
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
     );
+  } catch (e) {
+    print('Error scheduling notification: $e');
   }
+}
+
 }

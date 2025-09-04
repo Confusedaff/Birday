@@ -1,9 +1,9 @@
+import 'package:bday/widgets/remainder.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/hive.dart';
 
 class Copybd {
-  // ========== IMPORT FROM TEXT ==========
   static Future<void> showTextImportDialog(BuildContext context) async {
     final TextEditingController textController = TextEditingController();
 
@@ -73,89 +73,101 @@ class Copybd {
   }
 
   static Future<void> _importBirthdaysFromText(
-      BuildContext context, String text) async {
-    try {
-      List<Birthday> importedBirthdays = _parseBirthdayText(text);
+    BuildContext context, String text) async {
+  try {
+    List<Birthday> importedBirthdays = _parseBirthdayText(text);
 
-      if (importedBirthdays.isNotEmpty) {
-        for (var birthday in importedBirthdays) {
-          HiveBirthdayService.addBirthday(birthday);
+    if (importedBirthdays.isNotEmpty) {
+      final reminder = BirthdayReminder();
+      
+      for (var birthday in importedBirthdays) {
+        await HiveBirthdayService.addBirthday(birthday);
+        
+        if (birthday.isReminderEnabled) {
+          await reminder.scheduleBirthdayReminders(birthday);
         }
+      }
 
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Colors.green, size: 28),
-                SizedBox(width: 12),
-                Text('Import Successful'),
-              ],
-            ),
-            content: Text(
-                'Successfully imported ${importedBirthdays.length} birthday${importedBirthdays.length == 1 ? '' : 's'}!'),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Great!'),
-              ),
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.check_circle, color: Colors.green, size: 28),
+              SizedBox(width: 12),
+              Text('Import Successful'),
             ],
           ),
-        );
-      } else {
-        _showImportErrorDialog(context, 'No valid birthdays found in the text.');
-      }
-    } catch (e) {
-      _showImportErrorDialog(context, 'Error parsing text: ${e.toString()}');
+          content: Text(
+              'Successfully imported ${importedBirthdays.length} birthday${importedBirthdays.length == 1 ? '' : 's'}!'),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Great!'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _showImportErrorDialog(context, 'No valid birthdays found in the text.');
     }
+  } catch (e) {
+    _showImportErrorDialog(context, 'Error parsing text: ${e.toString()}');
   }
+}
 
   static List<Birthday> _parseBirthdayText(String text) {
-    List<Birthday> birthdays = [];
-    List<String> lines = text.split('\n');
+  List<Birthday> birthdays = [];
+  List<String> lines = text.split('\n');
 
-    for (String line in lines) {
-      line = line.trim();
-      if (line.isEmpty) continue;
+  for (String line in lines) {
+    line = line.trim();
+    if (line.isEmpty) continue;
 
-      try {
-        List<String> parts = line.split(',');
-        if (parts.length >= 2) {
-          String dateStr = parts[0].trim();
-          String name = parts[1].trim();
+    try {
+      List<String> parts = line.split(',');
+      if (parts.length >= 2) {
+        String dateStr = parts[0].trim();
+        String name = parts[1].trim();
 
-          List<String> dateParts = dateStr.split('/');
-          if (dateParts.length == 3) {
-            int day = int.parse(dateParts[0]);
-            int month = int.parse(dateParts[1]);
-            int year = int.parse(dateParts[2]);
+        List<String> dateParts = dateStr.split('/');
+        if (dateParts.length == 3) {
+          int day = int.parse(dateParts[0]);
+          int month = int.parse(dateParts[1]);
+          int year = int.parse(dateParts[2]);
 
-            if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
-              DateTime birthDate = DateTime(year, month, day);
+         if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
+            DateTime birthDate = DateTime(year, month, day);
+            DateTime defaultAlarmDate = DateTime(
+              birthDate.year,
+              birthDate.month,
+              birthDate.day,
+              9,
+              0,
+            ).subtract(const Duration(days: 1));
 
-              birthdays.add(
-                Birthday(
-                  name: name,
-                  birthDate: birthDate,
-                  alarmDate: null,
-                  alarmTimeHour: null,
-                  alarmTimeMinute: null,
-                  alarmId: null,
-                  isReminderEnabled: true,
-                ),
-              );
-            }
+            final birthday = Birthday(
+              name: name,
+              birthDate: birthDate,
+              alarmDate: defaultAlarmDate,
+              alarmTimeHour: defaultAlarmDate.hour.toString(),
+              alarmTimeMinute: defaultAlarmDate.minute.toString(),
+              alarmId: DateTime.now().millisecondsSinceEpoch.toString(),
+              isReminderEnabled: true,
+            );
+
+            birthdays.add(birthday);
           }
         }
-      } catch (_) {
-        continue; // skip invalid line
       }
+    } catch (_) {
+      continue; 
     }
-
-    return birthdays;
   }
+
+  return birthdays;
+}
 
   static void _showImportErrorDialog(BuildContext context, String message) {
     showDialog(
