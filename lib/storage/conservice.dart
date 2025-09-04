@@ -11,7 +11,7 @@ class SettingsService {
   
   static bool getConfettiEnabled() {
     final box = Hive.box(_boxName);
-    return box.get(_confettiKey, defaultValue: true); // Changed default to true
+    return box.get(_confettiKey, defaultValue: false); // Changed default to true
   }
   
   static Future<void> setConfettiEnabled(bool value) async {

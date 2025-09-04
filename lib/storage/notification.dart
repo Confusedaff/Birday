@@ -38,7 +38,7 @@ class NotiService {
   }
 
   const androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@drawable/notification_icon');
   const initSettings = InitializationSettings(android: androidSettings);
 
   await notificationsPlugin.initialize(initSettings);
