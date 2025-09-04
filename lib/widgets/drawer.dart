@@ -1,8 +1,60 @@
+import 'dart:io';
+
+import 'package:bday/storage/hive.dart';
+import 'package:bday/storage/hive_service.dart';
 import 'package:bday/widgets/settings.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
+
+  Future<void> _importBirthdays(BuildContext context) async {
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+    );
+
+    if (result != null && result.files.single.path != null) {
+      File file = File(result.files.single.path!);
+      String content = await file.readAsString();
+
+      List<String> lines = content.split('\n');
+      for (var line in lines) {
+        if (line.trim().isEmpty) continue;
+
+        final parts = line.split(',');
+        if (parts.length >= 2) {
+          final date = DateTime.tryParse(parts[0].trim());
+          final name = parts.sublist(1).join(",").trim(); 
+  
+          if (date != null && name.isNotEmpty) {
+            final birthday = Birthday(
+              name: name,
+              birthDate: date,
+            );
+
+            await HiveBirthdayService.addBirthday(birthday);
+          }
+        }
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Birthdays imported successfully ✅")),
+        );
+      }
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Import failed: $e")),
+      );
+    }
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +104,6 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           
-          // Drawer Items
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -68,10 +119,10 @@ class AppDrawer extends StatelessWidget {
                 _buildDrawerItem(
                   context,
                   icon: Icons.import_export_rounded,
-                  title: 'Import/Export',
-                  onTap: () {
+                  title: 'Import',
+                  onTap: () async {
                     Navigator.pop(context);
-                    // Navigate to import/export
+                    await _importBirthdays(context); 
                   },
                 ),
                 const Divider(),
