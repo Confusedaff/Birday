@@ -2,6 +2,13 @@ import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/notification.dart';
 
+class _ReminderLogger {
+  static void info(String message) => print('[REMINDER] $message');
+  static void success(String message) => print('[REMINDER] ✓ $message');
+  static void warning(String message) => print('[REMINDER] ⚠️ $message');
+  static void error(String message, [Object? e]) => print('[REMINDER] ❌ $message${e != null ? '\n  Error: $e' : ''}');
+}
+
 class BirthdayReminder {
   final NotiService _notiService = NotiService();
 
@@ -32,6 +39,9 @@ class BirthdayReminder {
     };
 
     int counter = 0;
+    int successCount = 0;
+    int failureCount = 0;
+
     for (final entry in reminders.entries) {
       final daysBefore = entry.key;
       final message = entry.value;
@@ -49,27 +59,48 @@ class BirthdayReminder {
 
       // Only schedule if it's in the future
       if (scheduledDate.isAfter(DateTime.now())) {
-        await _notiService.scheduleYearlyNotification(
-          id: birthday.key.hashCode + counter,
-          title: "Birthday Reminder 🎂",
-          body: message,
-          scheduledDate: scheduledDate,
-        );
-        print('Scheduled notification for ${birthday.name} on $scheduledDate');
+        try {
+          // Use deterministic ID: (key * 4) + counter to avoid collisions
+          final notificationId = (birthday.key as int) * 4 + counter;
+          await _notiService.scheduleYearlyNotification(
+            id: notificationId,
+            title: "Birthday Reminder 🎂",
+            body: message,
+            scheduledDate: scheduledDate,
+          );
+          successCount++;
+        } catch (e) {
+          failureCount++;
+          _ReminderLogger.error('Error scheduling notification for ${birthday.name}', e);
+        }
       }
       counter++;
     }
-  }
 
+    if (successCount > 0) {
+      _ReminderLogger.success('Scheduled $successCount reminder(s) for ${birthday.name}');
+    }
+    if (failureCount > 0) {
+      _ReminderLogger.warning('Failed to schedule $failureCount reminder(s) for ${birthday.name}');
+    }
+  }
 
   static Future<void> scheduleAllReminders() async {
     final reminder = BirthdayReminder();
     final birthdays = HiveBirthdayService.getAllBirthdays();
     
+    _ReminderLogger.info('Starting to schedule reminders for ${birthdays.length} birthday(ies)');
+    
     for (final birthday in birthdays) {
       if (birthday.isReminderEnabled) {
-        await reminder.scheduleBirthdayReminders(birthday);
+        try {
+          await reminder.scheduleBirthdayReminders(birthday);
+        } catch (e) {
+          _ReminderLogger.error('Error scheduling reminders for ${birthday.name}', e);
+        }
       }
     }
+    
+    _ReminderLogger.success('Reminder scheduling completed');
   }
 }

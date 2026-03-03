@@ -17,7 +17,10 @@ void main() async {
   await SettingsService.init();
   await NotiService().initNotification();
   
-  await BirthdayReminder.scheduleAllReminders();
+  // Schedule reminders in background without blocking startup
+  BirthdayReminder.scheduleAllReminders().catchError((error) {
+    print('[ERROR] Error scheduling reminders in background: $error');
+  });
 
   runApp(
     ChangeNotifierProvider(
@@ -34,7 +37,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Birthday App',
       theme: themeProvider.themeData,
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
