@@ -1,11 +1,25 @@
 import 'package:bday/storage/conservice.dart';
 import 'package:bday/widgets/bday_blocs.dart';
 import 'package:bday/widgets/search_widget.dart';
+import 'package:bday/services/logger_service.dart';
+import 'package:bday/config/app_constants.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 
+/// Main screen displaying the list of birthdays.
+///
+/// This stateful widget provides:
+/// - A scrollable list of all birthdays sorted by proximity
+/// - Search/filter functionality
+/// - Statistics showing total, today's, and upcoming birthdays
+/// - Confetti animation for birthdays today
+/// - Pull-to-refresh functionality
+/// - Scroll-aware statistics bar that hides when scrolling
+///
+/// The widget automatically loads birthdays on init and handles
+/// refresh after add/update/delete operations.
 class BirthdayListScreen extends StatefulWidget {
   const BirthdayListScreen({super.key});
 
@@ -14,26 +28,40 @@ class BirthdayListScreen extends StatefulWidget {
 }
 
 class _BirthdayListScreenState extends State<BirthdayListScreen> {
+  /// All loaded birthdays from database.
   List<Birthday> _birthdays = [];
+
+  /// Filtered birthdays based on current search query.
   List<Birthday> _filteredBirthdays = [];
+
+  /// Whether data is currently being loaded.
   bool _isLoading = true;
+
+  /// Current search query string.
   String _searchQuery = '';
+
+  /// Controller for confetti animation.
   late ConfettiController _confettiController;
-  
-  // Scroll-aware hiding variables
+
+  /// Controller for scrolling the birthday list.
   late ScrollController _scrollController;
+
+  /// Whether to show the statistics bar.
+  ///
+  /// The bar is hidden when user scrolls down (offset > 50px)
+  /// and shown when scrolling back to the top.
   bool _showStatistics = true;
 
   @override
   void initState() {
     super.initState();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 5));
-    
-    // Initialize scroll controller
+    _confettiController = ConfettiController(
+      duration: AppConstants.confettiDuration,
+    );
+
     _scrollController = ScrollController();
     _scrollController.addListener(_handleScroll);
-    
+
     _loadBirthdays();
   }
 
@@ -45,74 +73,120 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     super.dispose();
   }
 
-  // Handle scroll events to show/hide statistics
+  /// Handles scroll events to show/hide the statistics bar.
+  ///
+  /// Shows statistics only when near the top of the list (offset < 50px).
+  /// This prevents the statistics bar from covering the list while scrolling.
   void _handleScroll() {
-    // Show stats only when at the very top (offset < 50 pixels)
-    final isAtTop = _scrollController.offset < 50;
-    
+    final isAtTop = _scrollController.offset < AppConstants.scrollTopThreshold;
+
     if (isAtTop && !_showStatistics) {
-      // Reached top - show statistics
       setState(() => _showStatistics = true);
     } else if (!isAtTop && _showStatistics) {
-      // Scrolled down - hide statistics
       setState(() => _showStatistics = false);
     }
   }
 
+  /// Loads all birthdays from the database.
+  ///
+  /// This method:
+  /// 1. Fetches all birthdays from Hive storage
+  /// 2. Sorts them by proximity to next birthday
+  /// 3. Checks for birthdays today and triggers confetti if enabled
+  /// 4. Updates UI with loaded data
+  ///
+  /// Errors are logged and displayed to user via SnackBar.
   Future<void> _loadBirthdays() async {
-  try {
-    // Get birthdays from database
-    final birthdays = HiveBirthdayService.getAllBirthdays();
-    
-    // Sort on main thread (fast enough for most cases)
-    birthdays.sort((a, b) {
-      if (a.isBirthdayToday && !b.isBirthdayToday) return -1;
-      if (!a.isBirthdayToday && b.isBirthdayToday) return 1;
-      if (a.isBirthdayToday && b.isBirthdayToday) {
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    try {
+      // Get birthdays from database
+      final birthdays = HiveBirthdayService.getAllBirthdays();
+
+      // Sort birthdays:
+      // 1. Today's birthdays first
+      // 2. Then by days until next birthday
+      birthdays.sort((a, b) {
+        if (a.isBirthdayToday && !b.isBirthdayToday) return -1;
+        if (!a.isBirthdayToday && b.isBirthdayToday) return 1;
+        if (a.isBirthdayToday && b.isBirthdayToday) {
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        }
+        return a.daysUntilBirthday.compareTo(b.daysUntilBirthday);
+      });
+
+      setState(() {
+        _birthdays = birthdays;
+        _filteredBirthdays = birthdays;
+        _isLoading = false;
+      });
+
+      AppLogger.info('Loaded ${birthdays.length} birthday(ies)');
+
+      // Check for birthdays today and play confetti
+      _triggerConfettiIfNeeded(birthdays);
+    } catch (e) {
+      AppLogger.error(
+        'Failed to load birthdays',
+        error: e,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppConstants.errorLoadingBirthdays),
+            backgroundColor: Colors.red,
+            duration: AppConstants.longSnackBarDuration,
+          ),
+        );
       }
-      return a.daysUntilBirthday.compareTo(b.daysUntilBirthday);
-    });
-    
-    setState(() {
-      _birthdays = birthdays;
-      _filteredBirthdays = birthdays;
-      _isLoading = false;
-    });
-   
-    // Check for birthdays today and play confetti
-    if (_birthdays.isNotEmpty &&
-        _birthdays.any((b) => b.isBirthdayToday) &&
+    }
+  }
+
+  /// Triggers confetti animation if conditions are met.
+  ///
+  /// Shows confetti if:
+  /// 1. There are birthdays today
+  /// 2. Confetti animations are enabled
+  /// 3. Confetti hasn't been shown yet today
+  ///
+  /// Parameters:
+  ///   - birthdays: The list of birthdays to check
+  void _triggerConfettiIfNeeded(List<Birthday> birthdays) {
+    if (birthdays.isNotEmpty &&
+        birthdays.any((b) => b.isBirthdayToday) &&
         SettingsService.getConfettiEnabled() &&
         SettingsService.shouldPlayConfettiToday()) {
-      
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (mounted) {
-          _confettiController.play();
-          
-          // Mark confetti as played today
-          final today = DateTime.now().toIso8601String().split('T')[0];
-          await SettingsService.setLastConfettiDate(today);
+          try {
+            _confettiController.play();
+
+            // Mark confetti as played today
+            final today = DateTime.now().toIso8601String().split('T')[0];
+            await SettingsService.setLastConfettiDate(today);
+
+            AppLogger.debug('Confetti animation triggered');
+          } catch (e) {
+            AppLogger.error(
+              'Error playing confetti animation',
+              error: e,
+            );
+          }
         }
       });
     }
-    
-  } catch (e) {
-    setState(() {
-      _isLoading = false;
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load birthdays: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
-}
 
-  // Filter birthdays based on search query
+  /// Filters birthdays based on search query.
+  ///
+  /// Updates the filtered list to only include birthdays whose names
+  /// contain the search query (case-insensitive).
+  ///
+  /// Parameters:
+  ///   - query: The search string to filter by
   void _filterBirthdays(String query) {
     setState(() {
       _searchQuery = query;
@@ -127,7 +201,9 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     });
   }
 
-
+  /// Refreshes the birthday list.
+  ///
+  /// Called when user pulls to refresh or after add/update/delete operations.
   Future<void> _refreshBirthdays() async {
     await _loadBirthdays();
   }
@@ -163,6 +239,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
               ),
             ],
           ),
+          // Confetti Animation Layer
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -180,6 +257,15 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     );
   }
 
+  /// Builds the empty state UI when no birthdays match the search.
+  ///
+  /// Shows different messages depending on whether the list is empty
+  /// or if the search returned no results.
+  ///
+  /// Parameters:
+  ///   - theme: The current theme to apply to the UI
+  ///
+  /// Returns: A Widget representing the empty state
   Widget _buildEmptySearchState(ThemeData theme) {
     if (_searchQuery.isEmpty && _birthdays.isEmpty) {
       // No birthdays at all
@@ -194,14 +280,14 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No Birthdays Yet',
+              AppConstants.noBirthdaysYet,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add your first birthday to get started!',
+              AppConstants.addFirstBirthday,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
@@ -223,14 +309,14 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'No matches found',
+              AppConstants.noSearchResults,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Try searching with a different name',
+              AppConstants.tryDifferentSearch,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
@@ -242,11 +328,24 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     }
   }
 
+  /// Builds the main birthday list widget.
+  ///
+  /// Displays:
+  /// 1. Statistics bar (if scrolled to top)
+  /// 2. Scrollable list of birthday cards
+  /// 3. Pull-to-refresh functionality
+  ///
+  /// Parameters:
+  ///   - theme: The current theme to apply to the UI
+  ///
+  /// Returns: A Widget containing the birthday list
   Widget _buildBirthdayList(ThemeData theme) {
     // Pre-compute statistics once instead of computing during build
     final totalCount = _filteredBirthdays.length;
-    final todayCount = _filteredBirthdays.where((b) => b.isBirthdayToday).length;
-    final weekCount = _filteredBirthdays.where((b) => b.daysUntilBirthday <= 7).length;
+    final todayCount =
+        _filteredBirthdays.where((b) => b.isBirthdayToday).length;
+    final weekCount =
+        _filteredBirthdays.where((b) => b.daysUntilBirthday <= 7).length;
 
     return RefreshIndicator(
       onRefresh: _refreshBirthdays,
@@ -256,7 +355,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
           if (_showStatistics)
             AnimatedOpacity(
               opacity: _showStatistics ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
+              duration: AppConstants.animationDuration,
               child: Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
@@ -279,7 +378,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                   children: [
                     _buildStatItem(
                       icon: Icons.people_rounded,
-                      label: 'Total',
+                      label: AppConstants.totalLabel,
                       value: totalCount.toString(),
                       theme: theme,
                     ),
@@ -290,7 +389,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                     ),
                     _buildStatItem(
                       icon: Icons.celebration_rounded,
-                      label: 'Today',
+                      label: AppConstants.todayLabel,
                       value: todayCount.toString(),
                       theme: theme,
                     ),
@@ -301,7 +400,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                     ),
                     _buildStatItem(
                       icon: Icons.upcoming_rounded,
-                      label: 'This Week',
+                      label: AppConstants.thisWeekLabel,
                       value: weekCount.toString(),
                       theme: theme,
                     ),
@@ -331,6 +430,17 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     );
   }
 
+  /// Builds a single statistic item for the statistics bar.
+  ///
+  /// Shows an icon, value, and label for a single statistic.
+  ///
+  /// Parameters:
+  ///   - icon: The IconData to display
+  ///   - label: The label text (e.g., "Total")
+  ///   - value: The value to display (e.g., "42")
+  ///   - theme: The current theme to apply styling
+  ///
+  /// Returns: A Widget representing the stat item
   Widget _buildStatItem({
     required IconData icon,
     required String label,
