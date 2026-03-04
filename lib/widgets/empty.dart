@@ -14,7 +14,7 @@ class Empty extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -35,7 +35,7 @@ class Empty extends StatelessWidget {
           Text(
             'Add your first birthday reminder',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
         ],

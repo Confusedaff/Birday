@@ -15,7 +15,7 @@ class Draghandle extends StatelessWidget {
       height: 4,
       margin: const EdgeInsets.only(top: 8, bottom: 0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.onSurface.withOpacity(0.3),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(2),
       ),
     );

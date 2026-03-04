@@ -41,7 +41,7 @@ class TimeSelector extends StatelessWidget {
             color: theme.colorScheme.surface,
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.shadow.withOpacity(0.1),
+                color: theme.colorScheme.shadow.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -82,7 +82,7 @@ class TimeSelector extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 16.0),
                 child: Icon(
                   Icons.arrow_forward_ios,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   size: 16,
                 ),
               ),
@@ -127,9 +127,9 @@ class CustomTimePicker {
                   borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 backgroundColor: theme.colorScheme.surface,
-                hourMinuteColor: theme.colorScheme.surfaceVariant,
+                hourMinuteColor: theme.colorScheme.surfaceContainerHighest,
                 hourMinuteTextColor: theme.colorScheme.onSurfaceVariant,
-                dialBackgroundColor: theme.colorScheme.surfaceVariant,
+                dialBackgroundColor: theme.colorScheme.surfaceContainerHighest,
                 dialHandColor: primaryColor ?? theme.colorScheme.primary,
                 dialTextColor: Colors.white,
                 entryModeIconColor: theme.colorScheme.onSurfaceVariant,

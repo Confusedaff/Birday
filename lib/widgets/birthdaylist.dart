@@ -282,14 +282,14 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
             Text(
               AppConstants.noBirthdaysYet,
               style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               AppConstants.addFirstBirthday,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),
@@ -311,14 +311,14 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
             Text(
               AppConstants.noSearchResults,
               style: theme.textTheme.headlineSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               AppConstants.tryDifferentSearch,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),
@@ -364,13 +364,13 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.1),
-                      theme.colorScheme.secondary.withOpacity(0.05),
+                      theme.colorScheme.primary.withValues(alpha: 0.1),
+                      theme.colorScheme.secondary.withValues(alpha: 0.05),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.outline.withOpacity(0.1),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Row(
@@ -385,7 +385,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                     Container(
                       height: 40,
                       width: 1,
-                      color: theme.colorScheme.outline.withOpacity(0.3),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     ),
                     _buildStatItem(
                       icon: Icons.celebration_rounded,
@@ -396,7 +396,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
                     Container(
                       height: 40,
                       width: 1,
-                      color: theme.colorScheme.outline.withOpacity(0.3),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     ),
                     _buildStatItem(
                       icon: Icons.upcoming_rounded,
@@ -465,7 +465,7 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],

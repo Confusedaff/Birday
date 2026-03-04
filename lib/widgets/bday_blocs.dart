@@ -1,15 +1,42 @@
 import 'dart:io';
 
 import 'package:bday/widgets/remainder.dart';
+import 'package:bday/services/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/widgets/timeselector.dart';
 import 'package:image_picker/image_picker.dart';
 
+/// A card widget that displays a single birthday.
+///
+/// This stateful widget provides:
+/// - Birthday information display (name, age, days until birthday)
+/// - Profile picture support with gallery picker
+/// - Details dialog showing complete birthday information
+/// - Reminder time configuration
+/// - Edit and delete functionality
+/// - Enable/disable reminders toggle
+///
+/// The card automatically updates when birthday data changes and
+/// notifies parent widget via callbacks.
+///
+/// Usage:
+/// ```dart
+/// BirthdayCard(
+///   birthday: birthdayObject,
+///   onDelete: () => refreshBirthdaysList(),
+///   onUpdate: () => refreshBirthdaysList(),
+/// )
+/// ```
 class BirthdayCard extends StatefulWidget {
+  /// The birthday data to display.
   final Birthday birthday;
+
+  /// Callback when birthday is deleted.
   final VoidCallback? onDelete;
+
+  /// Callback when birthday is updated.
   final VoidCallback? onUpdate;
 
   const BirthdayCard({
@@ -25,96 +52,132 @@ class BirthdayCard extends StatefulWidget {
 
 class _BirthdayCardState extends State<BirthdayCard> {
 
-Future<void> _pickProfilePicture(Birthday birthday) async {
-  final picker = ImagePicker();
-  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  /// Picks a profile picture from gallery for the birthday.
+  ///
+  /// Allows user to select an image from their device and saves it
+  /// to the birthday object. Updates UI after selection.
+  ///
+  /// Parameters:
+  ///   - birthday: The birthday to add profile picture to
+  Future<void> _pickProfilePicture(Birthday birthday) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-  if (pickedFile != null) {
-    birthday.profileImagePath = pickedFile.path;
-    await birthday.save();
-    if (mounted) {
-      setState(() {});
+      if (pickedFile != null) {
+        birthday.profileImagePath = pickedFile.path;
+        await birthday.save();
+        if (mounted) {
+          setState(() {});
+          AppLogger.debug('Profile picture updated for ${birthday.name}');
+        }
+      }
+    } catch (e) {
+      AppLogger.error('Error picking profile picture', error: e);
     }
   }
-}
   
+  /// Shows a detailed birthday information dialog.
+  ///
+  /// Displays:
+  /// - Birthday name and date
+  /// - Current age
+  /// - Next birthday date
+  /// - Custom reminder time (if set)
+  ///
+  /// Parameters:
+  ///   - birthday: The birthday to show details for
   void _showBirthdayDetails(Birthday birthday) {
-    // Pre-compute details once to avoid repeated calculations
-    final details = _computeBirthdayDetails(birthday);
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final theme = Theme.of(context);
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.cake_rounded,
-                color: theme.colorScheme.primary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  birthday.name,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+    try {
+      final details = _computeBirthdayDetails(birthday);
+      
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.cake_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 28,
                 ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailRow(
-                icon: Icons.calendar_today_rounded,
-                label: 'Birth Date',
-                value: details['birthDate']!,
-                theme: theme,
-              ),
-              const SizedBox(height: 12),
-              _buildDetailRow(
-                icon: Icons.numbers_rounded,
-                label: 'Current Age',
-                value: details['age']!,
-                theme: theme,
-              ),
-              const SizedBox(height: 12),
-              _buildDetailRow(
-                icon: Icons.celebration_rounded,
-                label: 'Next Birthday',
-                value: details['nextBirthday']!,
-                theme: theme,
-              ),
-              if (birthday.alarmTime != null) ...[
-                const SizedBox(height: 12),
-                _buildDetailRow(
-                  icon: Icons.alarm_rounded,
-                  label: 'Reminder Time',
-                  value: details['reminderTime']!,
-                  theme: theme,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    birthday.name,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
             ),
-          ],
-        );
-      },
-    );
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailRow(
+                  icon: Icons.calendar_today_rounded,
+                  label: 'Birth Date',
+                  value: details['birthDate']!,
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  icon: Icons.numbers_rounded,
+                  label: 'Current Age',
+                  value: details['age']!,
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildDetailRow(
+                  icon: Icons.celebration_rounded,
+                  label: 'Next Birthday',
+                  value: details['nextBirthday']!,
+                  theme: theme,
+                ),
+                if (birthday.alarmTime != null) ...[
+                  const SizedBox(height: 12),
+                  _buildDetailRow(
+                    icon: Icons.alarm_rounded,
+                    label: 'Reminder Time',
+                    value: details['reminderTime']!,
+                    theme: theme,
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      AppLogger.error('Error showing birthday details', error: e);
+    }
   }
 
+  /// Builds a single detail row for the birthday information dialog.
+  ///
+  /// Shows an icon, label, and value in a formatted row.
+  ///
+  /// Parameters:
+  ///   - icon: The icon to display
+  ///   - label: The label text (e.g., "Birth Date")
+  ///   - value: The value text (e.g., "15 Mar 1990")
+  ///   - theme: The current theme for styling
+  ///
+  /// Returns: A Widget containing the formatted detail row
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
@@ -137,7 +200,7 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -156,7 +219,15 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
     );
   }
 
-  // Compute birthday details once to avoid repeated calculations
+  /// Computes formatted birthday details for display.
+  ///
+  /// Pre-computes details once to avoid repeated calculations.
+  /// Handles special cases like birthdays today.
+  ///
+  /// Parameters:
+  ///   - birthday: The birthday to compute details for
+  ///
+  /// Returns: A map with keys: 'birthDate', 'age', 'nextBirthday', 'reminderTime'
   Map<String, String> _computeBirthdayDetails(Birthday birthday) {
     return {
       'birthDate': birthday.formattedBirthDate,
@@ -170,6 +241,15 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
     };
   }
 
+  /// Shows the reminder settings bottom sheet.
+  ///
+  /// Allows user to:
+  /// - Toggle reminders on/off
+  /// - Set custom reminder time
+  /// - Save changes with proper validation
+  ///
+  /// Parameters:
+  ///   - birthday: The birthday to configure reminders for
   void _showReminderSettings(Birthday birthday) {
     showModalBottomSheet(
       context: context,
@@ -184,15 +264,23 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
     );
   }
 
+  /// Updates a birthday in the database and reschedules reminders.
+  ///
+  /// Performs:
+  /// 1. Finds the birthday in the database
+  /// 2. Updates the birthday object
+  /// 3. Reschedules reminders if changed
+  /// 4. Shows success/error feedback
+  ///
+  /// Parameters:
+  ///   - updatedBirthday: The updated birthday object
   Future<void> _updateBirthday(Birthday updatedBirthday) async {
     try {
-      // Find the index of this birthday in Hive
       final allBirthdays = HiveBirthdayService.getAllBirthdays();
       final index = allBirthdays.indexWhere((b) => b.key == updatedBirthday.key);
       
       if (index != -1) {
         await HiveBirthdayService.updateBirthday(index, updatedBirthday);
-        // Remove local state update since we're using widget.birthday directly
         widget.onUpdate?.call();
         
         if (mounted) {
@@ -311,13 +399,13 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.primaryContainer.withOpacity(0.8),
-            theme.colorScheme.secondaryContainer.withOpacity(0.6),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.8),
+            theme.colorScheme.secondaryContainer.withValues(alpha: 0.6),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -397,7 +485,7 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
               ? 'Happy Birthday! 🎉'
               : '${daysUntilBirthday + 1} days until birthday',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+            color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -407,7 +495,7 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
               ? 'Now $age years old!'
               : 'Turning ${age + 1}',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
+            color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -504,7 +592,7 @@ class _ReminderSettingsBottomSheetState extends State<_ReminderSettingsBottomShe
           Text(
             'for ${widget.birthday.name}',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 24),

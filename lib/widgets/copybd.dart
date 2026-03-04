@@ -46,7 +46,7 @@ class Copybd {
                   fillColor: Theme.of(context)
                       .colorScheme
                       .primaryContainer
-                      .withOpacity(0.1),
+                      .withValues(alpha: 0.1),
                 ),
               ),
             ],
@@ -88,32 +88,39 @@ class Copybd {
         }
       }
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.green, size: 28),
-              SizedBox(width: 12),
-              Text('Import Successful'),
+      // Check if context is still valid before showing dialog
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.green, size: 28),
+                SizedBox(width: 12),
+                Text('Import Successful'),
+              ],
+            ),
+            content: Text(
+                'Successfully imported ${importedBirthdays.length} birthday${importedBirthdays.length == 1 ? '' : 's'}!'),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Great!'),
+              ),
             ],
           ),
-          content: Text(
-              'Successfully imported ${importedBirthdays.length} birthday${importedBirthdays.length == 1 ? '' : 's'}!'),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Great!'),
-            ),
-          ],
-        ),
-      );
+        );
+      }
     } else {
-      _showImportErrorDialog(context, 'No valid birthdays found in the text.');
+      if (context.mounted) {
+        _showImportErrorDialog(context, 'No valid birthdays found in the text.');
+      }
     }
   } catch (e) {
-    _showImportErrorDialog(context, 'Error parsing text: ${e.toString()}');
+    if (context.mounted) {
+      _showImportErrorDialog(context, 'Error parsing text: ${e.toString()}');
+    }
   }
 }
 

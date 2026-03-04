@@ -115,6 +115,30 @@ class _SinglebdayState extends State<Singlebday> {
     );
   }
 
+  Future<void> _handleAlarmTimeTap(BuildContext currentContext) async {
+    final date = await showDatePicker(
+      context: currentContext,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+
+    if (!mounted || date == null) return;
+
+    final time = await CustomTimePicker.showCustomTimePicker(
+      // ignore: use_build_context_synchronously
+      context: currentContext,
+      helpText: 'Set Yearly Alarm Time',
+    );
+
+    if (!mounted || time == null) return;
+
+    setState(() {
+      selectedAlarmTime = time;
+      selectedAlarmDate = date;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -128,7 +152,7 @@ class _SinglebdayState extends State<Singlebday> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           boxShadow: [
             BoxShadow(
-              color: theme.colorScheme.shadow.withOpacity(0.1),
+              color: theme.colorScheme.shadow.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -187,28 +211,7 @@ class _SinglebdayState extends State<Singlebday> {
                     placeholder: "Select Alarm Time",
                     icon: Icons.alarm_add_rounded,
                     selectedTime: selectedAlarmTime,
-                    tap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(1900),
-                        lastDate: DateTime(2100),
-                      );
-                      
-                      if (date != null) {
-                        final time = await CustomTimePicker.showCustomTimePicker(
-                          context: context,
-                          helpText: 'Set Yearly Alarm Time',
-                        );
-                        
-                        if (time != null) {
-                          setState(() {
-                            selectedAlarmTime = time;
-                            selectedAlarmDate = date;
-                          });
-                        }
-                      }
-                    },
+                    tap: () => _handleAlarmTimeTap(context),
                   ),
                 ),
                 Padding(

@@ -20,7 +20,7 @@ class _SettingspageState extends State<Settingspage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -43,8 +43,8 @@ class _SettingspageState extends State<Settingspage> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                theme.colorScheme.primaryContainer.withOpacity(0.3),
-                theme.colorScheme.secondaryContainer.withOpacity(0.2),
+                theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
               ],
             ),
           ),
@@ -72,7 +72,7 @@ class _SettingspageState extends State<Settingspage> {
                   trailing: CupertinoSwitch(
                     value: themeProvider.isDarkmode,
                     onChanged: (value) => themeProvider.toggleTheme(),
-                    activeColor: theme.colorScheme.primary,
+                    activeTrackColor: theme.colorScheme.primary,
                   ),
                 ),
                   _buildSettingsTile(
@@ -86,7 +86,7 @@ class _SettingspageState extends State<Settingspage> {
                       await SettingsService.setConfettiEnabled(value);
                       setState(() {});
                     },
-                    activeColor: theme.colorScheme.primary,
+                    activeTrackColor: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -106,7 +106,7 @@ class _SettingspageState extends State<Settingspage> {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   onTap: () {
                     // Handle notifications settings
@@ -120,7 +120,7 @@ class _SettingspageState extends State<Settingspage> {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   onTap: () {
                     // Handle language settings
@@ -144,7 +144,7 @@ class _SettingspageState extends State<Settingspage> {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   onTap: () {
                     // Handle backup settings
@@ -198,11 +198,11 @@ class _SettingspageState extends State<Settingspage> {
             borderRadius: BorderRadius.circular(16),
             color: theme.colorScheme.surface,
             border: Border.all(
-              color: theme.colorScheme.outline.withOpacity(0.2),
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.shadow.withOpacity(0.1),
+                color: theme.colorScheme.shadow.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -240,7 +240,7 @@ class _SettingspageState extends State<Settingspage> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -265,7 +265,7 @@ class _SettingspageState extends State<Settingspage> {
                     Text(
                       subtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -332,7 +332,7 @@ class _SettingspageState extends State<Settingspage> {
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),

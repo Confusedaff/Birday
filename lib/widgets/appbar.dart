@@ -7,7 +7,7 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AppBar(
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
       elevation: 0,
       centerTitle: true,
       title: Text(
@@ -34,8 +34,8 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.primaryContainer.withOpacity(0.3),
-              theme.colorScheme.secondaryContainer.withOpacity(0.2),
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
             ],
           ),
         ),

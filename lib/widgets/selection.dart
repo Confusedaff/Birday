@@ -27,13 +27,13 @@ class Selection extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.primaryContainer.withOpacity(0.7),
-            theme.colorScheme.secondaryContainer.withOpacity(0.6),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
+            theme.colorScheme.secondaryContainer.withValues(alpha: 0.6),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -76,7 +76,7 @@ class Selection extends StatelessWidget {
                       Text(
                         subtitle,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+                          color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
                         ),
                       ),
                     ],

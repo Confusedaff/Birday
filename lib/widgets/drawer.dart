@@ -166,7 +166,7 @@ class AppDrawer extends StatelessWidget {
             child: Text(
               'Version 1.0.0',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -187,7 +187,7 @@ class AppDrawer extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
