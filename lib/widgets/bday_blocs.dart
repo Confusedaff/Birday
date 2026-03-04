@@ -39,6 +39,9 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
 }
   
   void _showBirthdayDetails(Birthday birthday) {
+    // Pre-compute details once to avoid repeated calculations
+    final details = _computeBirthdayDetails(birthday);
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -55,10 +58,13 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
                 size: 28,
               ),
               const SizedBox(width: 12),
-              Text(
-                birthday.name,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  birthday.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -70,23 +76,21 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
               _buildDetailRow(
                 icon: Icons.calendar_today_rounded,
                 label: 'Birth Date',
-                value: birthday.formattedBirthDate,
+                value: details['birthDate']!,
                 theme: theme,
               ),
               const SizedBox(height: 12),
               _buildDetailRow(
                 icon: Icons.numbers_rounded,
                 label: 'Current Age',
-                value: '${birthday.age} years old',
+                value: details['age']!,
                 theme: theme,
               ),
               const SizedBox(height: 12),
               _buildDetailRow(
                 icon: Icons.celebration_rounded,
                 label: 'Next Birthday',
-                value: birthday.isBirthdayToday 
-                    ? 'Today! 🎉' 
-                    : '${birthday.daysUntilBirthday+1} days (turning ${birthday.age})',
+                value: details['nextBirthday']!,
                 theme: theme,
               ),
               if (birthday.alarmTime != null) ...[
@@ -94,7 +98,7 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
                 _buildDetailRow(
                   icon: Icons.alarm_rounded,
                   label: 'Reminder Time',
-                  value: TimeUtils.formatTime(birthday.alarmTime!, false),
+                  value: details['reminderTime']!,
                   theme: theme,
                 ),
               ],
@@ -142,12 +146,28 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  // Compute birthday details once to avoid repeated calculations
+  Map<String, String> _computeBirthdayDetails(Birthday birthday) {
+    return {
+      'birthDate': birthday.formattedBirthDate,
+      'age': '${birthday.age} years old',
+      'nextBirthday': birthday.isBirthdayToday 
+          ? 'Today! 🎉' 
+          : '${birthday.daysUntilBirthday + 1} days (turning ${birthday.age})',
+      'reminderTime': birthday.alarmTime != null 
+          ? TimeUtils.formatTime(birthday.alarmTime!, false)
+          : '',
+    };
   }
 
   void _showReminderSettings(Birthday birthday) {
@@ -277,6 +297,12 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
     final theme = Theme.of(context);
     final birthday = widget.birthday;
     
+    // Pre-compute values to avoid recalculation during each rebuild
+    final isBirthdayToday = birthday.isBirthdayToday;
+    final daysUntilBirthday = birthday.daysUntilBirthday;
+    final age = birthday.age;
+    final profileImagePath = birthday.profileImagePath;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -306,105 +332,114 @@ Future<void> _pickProfilePicture(Birthday birthday) async {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                GestureDetector(
-                  onLongPress: () => _pickProfilePicture(birthday),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: birthday.isBirthdayToday 
-                          ? Colors.orange 
-                          : theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        // BoxShadow(
-                        //   color: (birthday.isBirthdayToday 
-                        //       ? Colors.orange 
-                        //       : theme.colorScheme.primary).withOpacity(0.3),
-                        //   blurRadius: 8,
-                        //   offset: const Offset(0, 4),
-                        // ),
-                      ],
-                      image: birthday.profileImagePath != null
-                          ? DecorationImage(
-                              image: FileImage(File(birthday.profileImagePath!)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: birthday.profileImagePath == null
-                        ? Icon(
-                            birthday.isBirthdayToday 
-                                ? Icons.celebration_rounded 
-                                : Icons.cake_rounded,
-                            color: Colors.white,
-                            size: 30,
-                          )
-                        : null,
-                  ),
-                ),
+                _buildProfileAvatar(isBirthdayToday, profileImagePath, theme),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 10,),
-                      Text(
-                        birthday.name,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        birthday.isBirthdayToday
-                            ? 'Happy Birthday! 🎉'
-                            : '${birthday.daysUntilBirthday + 1} days until birthday',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
-                        ),
-                      ),
-                      Text(
-                        birthday.isBirthdayToday
-                            ? 'Now ${birthday.age} years old!'
-                            : 'Turning ${birthday.age + 1}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildBirthdayInfo(isBirthdayToday, daysUntilBirthday, age, theme),
                 ),
-                Column(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        birthday.isReminderEnabled
-                            ? Icons.notifications_active_rounded
-                            : Icons.notifications_off_rounded,
-                        color: birthday.isReminderEnabled 
-                            ? theme.colorScheme.primary 
-                            : theme.colorScheme.outline,
-                      ),
-                      onPressed: () => _showReminderSettings(birthday),
-                      tooltip: 'Reminder Settings',
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete_rounded,
-                        color: theme.colorScheme.error,
-                      ),
-                      onPressed: () => _confirmDelete(birthday),
-                      tooltip: 'Delete',
-                    ),
-                  ],
-                ),
+                _buildActionButtons(birthday, theme),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileAvatar(bool isBirthdayToday, String? profileImagePath, ThemeData theme) {
+    return GestureDetector(
+      onLongPress: () => _pickProfilePicture(widget.birthday),
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: isBirthdayToday 
+              ? Colors.orange 
+              : theme.colorScheme.primary,
+          shape: BoxShape.circle,
+          image: profileImagePath != null
+              ? DecorationImage(
+                  image: FileImage(File(profileImagePath)),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: profileImagePath == null
+            ? Icon(
+                isBirthdayToday 
+                    ? Icons.celebration_rounded 
+                    : Icons.cake_rounded,
+                color: Colors.white,
+                size: 30,
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildBirthdayInfo(bool isBirthdayToday, int daysUntilBirthday, int age, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        Text(
+          widget.birthday.name,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onPrimaryContainer,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          isBirthdayToday
+              ? 'Happy Birthday! 🎉'
+              : '${daysUntilBirthday + 1} days until birthday',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          isBirthdayToday
+              ? 'Now $age years old!'
+              : 'Turning ${age + 1}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(Birthday birthday, ThemeData theme) {
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(
+            birthday.isReminderEnabled
+                ? Icons.notifications_active_rounded
+                : Icons.notifications_off_rounded,
+            color: birthday.isReminderEnabled 
+                ? theme.colorScheme.primary 
+                : theme.colorScheme.outline,
+          ),
+          onPressed: () => _showReminderSettings(birthday),
+          tooltip: 'Reminder Settings',
+          iconSize: 24,
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.delete_rounded,
+            color: theme.colorScheme.error,
+          ),
+          onPressed: () => _confirmDelete(birthday),
+          tooltip: 'Delete',
+          iconSize: 24,
+        ),
+      ],
     );
   }
 }

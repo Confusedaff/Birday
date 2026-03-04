@@ -1,27 +1,28 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:flutter_timezone/flutter_timezone.dart'; 
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:flutter/foundation.dart';
 
 class _Logger {
   static void debug(String message) {
-    print('[DEBUG] $message');
+    if (kDebugMode) print('[DEBUG] $message');
   }
   
   static void info(String message) {
-    print('[INFO] $message');
+    if (kDebugMode) print('[INFO] $message');
   }
   
   static void warning(String message) {
-    print('[WARN] $message');
+    if (kDebugMode) print('[WARN] $message');
   }
   
   static void error(String message, [Object? error]) {
-    print('[ERROR] $message${error != null ? '\nError: $error' : ''}');
+    if (kDebugMode) print('[ERROR] $message${error != null ? '\nError: $error' : ''}');
   }
   
   static void success(String message) {
-    print('[SUCCESS] ✓ $message');
+    if (kDebugMode) print('[SUCCESS] ✓ $message');
   }
 }
 
@@ -141,8 +142,9 @@ class NotiService {
   }
 
   Future<void> cancelBirthdayNotifications(int birthdayKey) async {
+    // This method is deprecated - use the new safe ID generation in BirthdayReminder
+    // Kept for backward compatibility
     for (int i = 0; i < 4; i++) {
-      // Use same deterministic ID calculation as in scheduleBirthdayReminders
       await cancelNotification(birthdayKey * 4 + i);
     }
   }

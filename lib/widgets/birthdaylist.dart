@@ -1,5 +1,6 @@
 import 'package:bday/storage/conservice.dart';
 import 'package:bday/widgets/bday_blocs.dart';
+import 'package:bday/widgets/search_widget.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:bday/storage/hive.dart';
@@ -14,26 +15,56 @@ class BirthdayListScreen extends StatefulWidget {
 
 class _BirthdayListScreenState extends State<BirthdayListScreen> {
   List<Birthday> _birthdays = [];
+  List<Birthday> _filteredBirthdays = [];
   bool _isLoading = true;
+  String _searchQuery = '';
   late ConfettiController _confettiController;
+  
+  // Scroll-aware hiding variables
+  late ScrollController _scrollController;
+  bool _showStatistics = true;
 
   @override
   void initState() {
     super.initState();
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 5));
+    
+    // Initialize scroll controller
+    _scrollController = ScrollController();
+    _scrollController.addListener(_handleScroll);
+    
     _loadBirthdays();
   }
 
   @override
   void dispose() {
     _confettiController.dispose();
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  // Handle scroll events to show/hide statistics
+  void _handleScroll() {
+    // Show stats only when at the very top (offset < 50 pixels)
+    final isAtTop = _scrollController.offset < 50;
+    
+    if (isAtTop && !_showStatistics) {
+      // Reached top - show statistics
+      setState(() => _showStatistics = true);
+    } else if (!isAtTop && _showStatistics) {
+      // Scrolled down - hide statistics
+      setState(() => _showStatistics = false);
+    }
   }
 
   Future<void> _loadBirthdays() async {
   try {
+    // Get birthdays from database
     final birthdays = HiveBirthdayService.getAllBirthdays();
+    
+    // Sort on main thread (fast enough for most cases)
     birthdays.sort((a, b) {
       if (a.isBirthdayToday && !b.isBirthdayToday) return -1;
       if (!a.isBirthdayToday && b.isBirthdayToday) return 1;
@@ -45,10 +76,13 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     
     setState(() {
       _birthdays = birthdays;
+      _filteredBirthdays = birthdays;
       _isLoading = false;
     });
    
-    if (_birthdays.any((b) => b.isBirthdayToday) &&
+    // Check for birthdays today and play confetti
+    if (_birthdays.isNotEmpty &&
+        _birthdays.any((b) => b.isBirthdayToday) &&
         SettingsService.getConfettiEnabled() &&
         SettingsService.shouldPlayConfettiToday()) {
       
@@ -78,6 +112,21 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
   }
 }
 
+  // Filter birthdays based on search query
+  void _filterBirthdays(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredBirthdays = _birthdays;
+      } else {
+        _filteredBirthdays = _birthdays
+            .where((birthday) =>
+                birthday.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
 
   Future<void> _refreshBirthdays() async {
     await _loadBirthdays();
@@ -98,12 +147,22 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Stack(
         children: [
-          _birthdays.isEmpty
-              ? _buildEmptyState(theme)
-              : _buildBirthdayList(theme),
+          Column(
+            children: [
+              // Search Widget
+              SearchWidget(
+                onSearchChanged: _filterBirthdays,
+              ),
+              Expanded(
+                child: _filteredBirthdays.isEmpty
+                    ? _buildEmptySearchState(theme)
+                    : _buildBirthdayList(theme),
+              ),
+            ],
+          ),
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -121,105 +180,145 @@ class _BirthdayListScreenState extends State<BirthdayListScreen> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.cake_outlined,
-            size: 100,
-            color: theme.colorScheme.outline,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No Birthdays Yet',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+  Widget _buildEmptySearchState(ThemeData theme) {
+    if (_searchQuery.isEmpty && _birthdays.isEmpty) {
+      // No birthdays at all
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cake_outlined,
+              size: 100,
+              color: theme.colorScheme.outline,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add your first birthday to get started!',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+            const SizedBox(height: 24),
+            Text(
+              'No Birthdays Yet',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+            const SizedBox(height: 8),
+            Text(
+              'Add your first birthday to get started!',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Search returned no results
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 100,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No matches found',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try searching with a different name',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildBirthdayList(ThemeData theme) {
+    // Pre-compute statistics once instead of computing during build
+    final totalCount = _filteredBirthdays.length;
+    final todayCount = _filteredBirthdays.where((b) => b.isBirthdayToday).length;
+    final weekCount = _filteredBirthdays.where((b) => b.daysUntilBirthday <= 7).length;
+
     return RefreshIndicator(
       onRefresh: _refreshBirthdays,
       child: Column(
         children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.primary.withOpacity(0.1),
-                  theme.colorScheme.secondary.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.1),
+          // Animated Statistics Card - Only shown when at top
+          if (_showStatistics)
+            AnimatedOpacity(
+              opacity: _showStatistics ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.secondary.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withOpacity(0.1),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatItem(
+                      icon: Icons.people_rounded,
+                      label: 'Total',
+                      value: totalCount.toString(),
+                      theme: theme,
+                    ),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: theme.colorScheme.outline.withOpacity(0.3),
+                    ),
+                    _buildStatItem(
+                      icon: Icons.celebration_rounded,
+                      label: 'Today',
+                      value: todayCount.toString(),
+                      theme: theme,
+                    ),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: theme.colorScheme.outline.withOpacity(0.3),
+                    ),
+                    _buildStatItem(
+                      icon: Icons.upcoming_rounded,
+                      label: 'This Week',
+                      value: weekCount.toString(),
+                      theme: theme,
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  icon: Icons.people_rounded,
-                  label: 'Total',
-                  value: _birthdays.length.toString(),
-                  theme: theme,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  icon: Icons.celebration_rounded,
-                  label: 'Today',
-                  value: _birthdays
-                      .where((b) => b.isBirthdayToday)
-                      .length
-                      .toString(),
-                  theme: theme,
-                ),
-                Container(
-                  height: 40,
-                  width: 1,
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  icon: Icons.upcoming_rounded,
-                  label: 'This Week',
-                  value: _birthdays
-                      .where((b) => b.daysUntilBirthday <= 7)
-                      .length
-                      .toString(),
-                  theme: theme,
-                ),
-              ],
-            ),
-          ),
+          // Birthday List
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _birthdays.length,
+              itemCount: _filteredBirthdays.length,
               itemBuilder: (context, index) {
-                final birthday = _birthdays[index];
+                final birthday = _filteredBirthdays[index];
                 return BirthdayCard(
+                  key: ValueKey(birthday.key),
                   birthday: birthday,
                   onDelete: _refreshBirthdays,
                   onUpdate: _refreshBirthdays,

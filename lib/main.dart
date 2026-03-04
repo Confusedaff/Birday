@@ -11,23 +11,26 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize in parallel where possible
   await Hive.initFlutter();
   await Hive.openBox('theme');        
   await HiveBirthdayService.init(); 
   await SettingsService.init();
   await NotiService().initNotification();
   
-  // Schedule reminders in background without blocking startup
-  BirthdayReminder.scheduleAllReminders().catchError((error) {
-    print('[ERROR] Error scheduling reminders in background: $error');
-  });
-
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
       child: const MyApp(),
     ),
   );
+  
+  // Schedule reminders AFTER app starts (non-blocking)
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    BirthdayReminder.scheduleAllReminders().catchError((error) {
+      print('[ERROR] Error scheduling reminders: $error');
+    });
+  });
 }
 
 class MyApp extends StatelessWidget {

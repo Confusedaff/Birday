@@ -1,20 +1,43 @@
 import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/notification.dart';
+import 'package:flutter/foundation.dart';
 
 class _ReminderLogger {
-  static void info(String message) => print('[REMINDER] $message');
-  static void success(String message) => print('[REMINDER] ✓ $message');
-  static void warning(String message) => print('[REMINDER] ⚠️ $message');
-  static void error(String message, [Object? e]) => print('[REMINDER] ❌ $message${e != null ? '\n  Error: $e' : ''}');
+  static void info(String message) {
+    if (kDebugMode) print('[REMINDER] $message');
+  }
+  
+  static void success(String message) {
+    if (kDebugMode) print('[REMINDER] ✓ $message');
+  }
+  
+  static void warning(String message) {
+    if (kDebugMode) print('[REMINDER] ⚠️ $message');
+  }
+  
+  static void error(String message, [Object? e]) {
+    if (kDebugMode) print('[REMINDER] ❌ $message${e != null ? '\n  Error: $e' : ''}');
+  }
 }
 
 class BirthdayReminder {
   final NotiService _notiService = NotiService();
 
+  // Generate a unique, deterministic notification ID from birthday
+  int _generateNotificationId(Birthday birthday, int counter) {
+    // Use hashCode for safety + counter to create unique IDs
+    // This prevents collisions even if key is not an integer
+    final baseId = birthday.name.hashCode.abs() + birthday.birthDate.millisecondsSinceEpoch.toInt().abs();
+    return (baseId % 1000000) * 10 + counter;
+  }
+
   // Cancel existing notifications before scheduling new ones
   Future<void> cancelBirthdayReminders(Birthday birthday) async {
-    await _notiService.cancelBirthdayNotifications(birthday.key);
+    // Cancel all 4 possible notification IDs for this birthday
+    for (int i = 0; i < 4; i++) {
+      await _notiService.cancelNotification(_generateNotificationId(birthday, i));
+    }
   }
 
   Future<void> scheduleBirthdayReminders(Birthday birthday) async {
@@ -29,8 +52,9 @@ class BirthdayReminder {
     await cancelBirthdayReminders(birthday);
 
     final nextBday = birthday.nextBirthday;
+    final now = DateTime.now();
 
-    // Reminder texts
+    // Reminder configurations - ONLY these 4 days are allowed
     final reminders = {
       30: "🎉 ${birthday.name}'s birthday is in 1 month!",
       15: "⏰ ${birthday.name}'s birthday is in 15 days!",
@@ -46,6 +70,7 @@ class BirthdayReminder {
       final daysBefore = entry.key;
       final message = entry.value;
 
+      // Calculate reminder date by subtracting days from next birthday
       final reminderDate = nextBday.subtract(Duration(days: daysBefore));
       
       // Set the time from alarm settings or default to 9:00 AM
@@ -57,22 +82,28 @@ class BirthdayReminder {
         birthday.alarmTime?.minute ?? 0,
       );
 
-      // Only schedule if it's in the future
-      if (scheduledDate.isAfter(DateTime.now())) {
-        try {
-          // Use deterministic ID: (key * 4) + counter to avoid collisions
-          final notificationId = (birthday.key as int) * 4 + counter;
-          await _notiService.scheduleYearlyNotification(
-            id: notificationId,
-            title: "Birthday Reminder 🎂",
-            body: message,
-            scheduledDate: scheduledDate,
-          );
-          successCount++;
-        } catch (e) {
-          failureCount++;
-          _ReminderLogger.error('Error scheduling notification for ${birthday.name}', e);
-        }
+      // Skip if the reminder date is invalid (before today) or too far in the past
+      if (scheduledDate.isBefore(now) || scheduledDate.difference(now).inDays < 0) {
+        _ReminderLogger.warning('Skipping past reminder ($daysBefore days before) for ${birthday.name}: $scheduledDate');
+        counter++;
+        continue;
+      }
+
+      try {
+        // Use safe, deterministic ID generation
+        final notificationId = _generateNotificationId(birthday, counter);
+        _ReminderLogger.info('Scheduling notification ID: $notificationId for ${birthday.name} at $scheduledDate');
+        
+        await _notiService.scheduleYearlyNotification(
+          id: notificationId,
+          title: "Birthday Reminder 🎂",
+          body: message,
+          scheduledDate: scheduledDate,
+        );
+        successCount++;
+      } catch (e) {
+        failureCount++;
+        _ReminderLogger.error('Error scheduling notification for ${birthday.name}', e);
       }
       counter++;
     }
