@@ -3,7 +3,6 @@ import 'package:bday/pages/home.dart';
 import 'package:bday/services/logger_service.dart';
 import 'package:bday/storage/conservice.dart';
 import 'package:bday/storage/hive_service.dart';
-import 'package:bday/storage/notification.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:bday/widgets/remainder.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +54,7 @@ void main() async {
 /// - Hive database initialization
 /// - Theme settings
 /// - Settings service
-/// - Notification service
+/// - Notification service (lazy-initialized post-frame to avoid UI lag)
 Future<void> _initializeServices() async {
   AppLogger.info('Initializing services...');
 
@@ -76,9 +75,9 @@ Future<void> _initializeServices() async {
     await SettingsService.init();
     AppLogger.debug('Settings service initialized');
 
-    // Initialize notification service
-    await NotiService().initNotification();
-    AppLogger.debug('Notification service initialized');
+    // NOTE: Notification service is NOT initialized here to avoid blocking UI thread.
+    // It will be lazily initialized on first use via NotiService singleton.
+    // This significantly improves app startup time (avoids 2-3 second timezone lookup).
   } catch (e, stackTrace) {
     AppLogger.error(
       'Error during service initialization',

@@ -3,6 +3,7 @@ import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/notification.dart';
 import 'package:bday/services/logger_service.dart';
 import 'package:bday/config/app_constants.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service for managing birthday reminders and scheduling notifications.
 ///
@@ -179,6 +180,30 @@ class BirthdayReminder {
   /// other birthdays from being processed.
   static Future<void> scheduleAllReminders() async {
     try {
+      AppLogger.info('Starting background reminder scheduling...');
+      
+      // Run reminder scheduling in background isolate to avoid blocking UI
+      await compute(_scheduleRemindersInBackground, null);
+      
+      AppLogger.info('Reminder scheduling completed');
+    } catch (e) {
+      AppLogger.error(
+        'Error in scheduleAllReminders',
+        error: e,
+      );
+    }
+  }
+  
+  /// Background task for scheduling reminders (runs in separate isolate).
+  /// 
+  /// This function is called via compute() to avoid blocking the main UI thread.
+  /// It performs all reminder scheduling work in a separate isolate.
+  static Future<void> _scheduleRemindersInBackground(_) async {
+    try {
+      // Ensure notification service is initialized in background isolate
+      final notiService = NotiService();
+      await notiService.initNotification();
+      
       final reminder = BirthdayReminder();
       final birthdays = HiveBirthdayService.getAllBirthdays();
 
@@ -198,11 +223,9 @@ class BirthdayReminder {
           }
         }
       }
-
-      AppLogger.info('Reminder scheduling completed');
     } catch (e) {
       AppLogger.error(
-        'Error in scheduleAllReminders',
+        'Error in background reminder scheduling',
         error: e,
       );
     }
