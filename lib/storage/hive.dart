@@ -102,15 +102,20 @@ class Birthday extends HiveObject {
   /// Gets the reminder time as a TimeOfDay object.
   ///
   /// Converts the stored hour and minute strings to a TimeOfDay for use in UI.
-  /// Returns null if either hour or minute is not set.
+  /// Returns null if either hour or minute is not set or invalid.
   ///
   /// Returns: A [TimeOfDay] representing the alarm time, or null
   TimeOfDay? get alarmTime {
     if (alarmTimeHour != null && alarmTimeMinute != null) {
-      return TimeOfDay(
-        hour: int.parse(alarmTimeHour!),
-        minute: int.parse(alarmTimeMinute!),
-      );
+      try {
+        return TimeOfDay(
+          hour: int.parse(alarmTimeHour!),
+          minute: int.parse(alarmTimeMinute!),
+        );
+      } catch (e) {
+        // Invalid stored values, return null to use defaults
+        return null;
+      }
     }
     return null;
   }

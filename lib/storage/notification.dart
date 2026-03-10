@@ -204,6 +204,11 @@ class NotiService {
         playSound: true,
         enableVibration: true,
       ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
   }
 

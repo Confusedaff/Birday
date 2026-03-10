@@ -92,6 +92,9 @@ class BirthdayReminder {
   /// Parameters:
   ///   - birthday: The birthday to schedule reminders for
   Future<void> scheduleBirthdayReminders(Birthday birthday) async {
+    // Ensure notification service is initialized
+    await _notiService.initNotification();
+
     // If reminders are disabled, cancel any existing ones
     if (!birthday.isReminderEnabled) {
       await cancelBirthdayReminders(birthday);
