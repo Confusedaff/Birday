@@ -19,7 +19,7 @@ class Button extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
         child: Container(
           height: 65,
-          width: 185,
+          width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(25),
             gradient: LinearGradient(
@@ -39,6 +39,9 @@ class Button extends StatelessWidget {
           child: Center(
             child: Text(
               text,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onPrimary,

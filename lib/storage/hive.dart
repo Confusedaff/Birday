@@ -166,13 +166,18 @@ class Birthday extends HiveObject {
   /// ```
   int get daysUntilBirthday {
     final now = DateTime.now();
-    final thisYear = DateTime(now.year, birthDate.month, birthDate.day);
-    final nextYear = DateTime(now.year + 1, birthDate.month, birthDate.day);
+    // Normalize to a date-only value (midnight). Comparing a midnight
+    // "thisYear" date directly against DateTime.now() (which carries a
+    // time-of-day) meant the comparison was almost always false on the
+    // actual birthday itself, incorrectly rolling over to next year.
+    final today = DateTime(now.year, now.month, now.day);
+    final thisYear = DateTime(today.year, birthDate.month, birthDate.day);
 
-    if (thisYear.isAfter(now) || thisYear.isAtSameMomentAs(now)) {
-      return thisYear.difference(now).inDays;
+    if (!thisYear.isBefore(today)) {
+      return thisYear.difference(today).inDays;
     } else {
-      return nextYear.difference(now).inDays;
+      final nextYear = DateTime(today.year + 1, birthDate.month, birthDate.day);
+      return nextYear.difference(today).inDays;
     }
   }
 
@@ -190,12 +195,13 @@ class Birthday extends HiveObject {
   /// ```
   DateTime get nextBirthday {
     final now = DateTime.now();
-    final thisYear = DateTime(now.year, birthDate.month, birthDate.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final thisYear = DateTime(today.year, birthDate.month, birthDate.day);
 
-    if (thisYear.isAfter(now) || thisYear.isAtSameMomentAs(now)) {
+    if (!thisYear.isBefore(today)) {
       return thisYear;
     } else {
-      return DateTime(now.year + 1, birthDate.month, birthDate.day);
+      return DateTime(today.year + 1, birthDate.month, birthDate.day);
     }
   }
 

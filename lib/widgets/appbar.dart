@@ -21,7 +21,7 @@ class Appbar extends StatelessWidget implements PreferredSizeWidget {
             builder: (context) => IconButton(
                   icon: Icon(
                     Icons.menu,
-                    color: Theme.of(context).colorScheme.inversePrimary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   onPressed: () {
                     Scaffold.of(context).openDrawer();

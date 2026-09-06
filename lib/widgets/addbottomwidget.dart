@@ -56,7 +56,6 @@ class Addbottomwidget extends StatelessWidget {
                     builder: (context) => const Singlebday(),
                   );
                 },
-                selectionBody: null,
               ),
               Selection(
                 icon: Icons.edit_rounded,
@@ -65,7 +64,6 @@ class Addbottomwidget extends StatelessWidget {
                  onTap: () {
                   Copybd.showTextImportDialog(context);
                 },
-                selectionBody: null,
               ),
             ],
           ),

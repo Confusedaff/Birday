@@ -3,7 +3,6 @@ import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/notification.dart';
 import 'package:bday/services/logger_service.dart';
 import 'package:bday/config/app_constants.dart';
-import 'package:flutter/foundation.dart';
 
 /// Service for managing birthday reminders and scheduling notifications.
 ///
@@ -183,11 +182,22 @@ class BirthdayReminder {
   /// other birthdays from being processed.
   static Future<void> scheduleAllReminders() async {
     try {
-      AppLogger.info('Starting background reminder scheduling...');
-      
-      // Run reminder scheduling in background isolate to avoid blocking UI
-      await compute(_scheduleRemindersInBackground, null);
-      
+      AppLogger.info('Starting reminder scheduling...');
+
+      // NOTE: This intentionally runs on the main isolate. compute() was
+      // used previously to try to avoid blocking the UI thread, but it
+      // spawns a brand new isolate that does not share the main isolate's
+      // memory: the already-opened Hive box and registered adapters aren't
+      // visible there, and platform channels (used to talk to the native
+      // notifications plugin) aren't available either. That made every
+      // call to getAllBirthdays() throw inside the isolate, so reminders
+      // were silently never scheduled. The work here is I/O-bound (Hive
+      // reads + async platform channel calls), not CPU-bound, so it does
+      // not block the UI thread even without a separate isolate - and it's
+      // already invoked from a post-frame callback so it doesn't delay
+      // the first paint.
+      await _scheduleAllStoredReminders(null);
+
       AppLogger.info('Reminder scheduling completed');
     } catch (e) {
       AppLogger.error(
@@ -196,14 +206,11 @@ class BirthdayReminder {
       );
     }
   }
-  
-  /// Background task for scheduling reminders (runs in separate isolate).
-  /// 
-  /// This function is called via compute() to avoid blocking the main UI thread.
-  /// It performs all reminder scheduling work in a separate isolate.
-  static Future<void> _scheduleRemindersInBackground(_) async {
+
+  /// Performs all reminder scheduling work for every stored birthday.
+  static Future<void> _scheduleAllStoredReminders(_) async {
     try {
-      // Ensure notification service is initialized in background isolate
+      // Ensure notification service is initialized
       final notiService = NotiService();
       await notiService.initNotification();
       

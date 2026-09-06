@@ -66,7 +66,7 @@ class Dateselector extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 16.0),
                 child: Text(
                   selectedDate != null
-                      ? DateUtils.formatDateReadable(selectedDate!)
+                      ? BdayDateFormatter.formatDateReadable(selectedDate!)
                       : placeholder, // show date or placeholder
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
@@ -145,34 +145,11 @@ class CustomDatePicker {
   }
 }
 
-/// Utility class for date operations
-class DateUtils {
-  /// Calculate days between two dates
-  static int daysBetween(DateTime from, DateTime to) {
-    from = DateTime(from.year, from.month, from.day);
-    to = DateTime(to.year, to.month, to.day);
-    return (to.difference(from).inHours / 24).round();
-  }
-
-  /// Check if a date is today
-  static bool isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  /// Check if a date is in the future
-  static bool isFuture(DateTime date) {
-    final now = DateTime.now();
-    return date.isAfter(DateTime(now.year, now.month, now.day));
-  }
-
-  /// Format date as DD/MM/YYYY
-  static String formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
-
+/// Formats dates for display in the birthday/date picker widgets.
+///
+/// Named distinctly (not `DateUtils`) to avoid shadowing/colliding with
+/// Flutter's own `material.dart` DateUtils class.
+class BdayDateFormatter {
   /// Format date as a readable string (e.g., "15 Mar 2024")
   static String formatDateReadable(DateTime date) {
     const months = [
@@ -180,29 +157,5 @@ class DateUtils {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  /// Get age from birth date
-  static int calculateAge(DateTime birthDate) {
-    final now = DateTime.now();
-    int age = now.year - birthDate.year;
-    if (now.month < birthDate.month ||
-        (now.month == birthDate.month && now.day < birthDate.day)) {
-      age--;
-    }
-    return age;
-  }
-
-  /// Get days until next birthday
-  static int daysUntilBirthday(DateTime birthDate) {
-    final now = DateTime.now();
-    final thisYear = DateTime(now.year, birthDate.month, birthDate.day);
-    final nextYear = DateTime(now.year + 1, birthDate.month, birthDate.day);
-
-    if (thisYear.isAfter(now) || thisYear.isAtSameMomentAs(now)) {
-      return thisYear.difference(now).inDays;
-    } else {
-      return nextYear.difference(now).inDays;
-    }
   }
 }

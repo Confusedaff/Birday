@@ -11,8 +11,7 @@ class Selection extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.onTap, 
-    required selectionBody,
+    required this.onTap,
   });
 
   @override

@@ -47,5 +47,7 @@
 	<true/>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app needs notifications to remind you of upcoming birthdays.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library so you can add a profile picture for a birthday.</string>
 </dict>
 </plist>

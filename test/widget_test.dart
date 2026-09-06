@@ -1,30 +1,65 @@
-// This is a basic Flutter widget test.
+// Smoke tests for the Birthday app.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// The app relies on Hive (a local database) being initialized before any
+// screen can render, and on a ThemeProvider being available above MyApp in
+// the widget tree (see main.dart). These tests set both up against an
+// isolated temporary directory so they don't touch real app data and can
+// run repeatably in CI.
 
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'dart:io';
 
 import 'package:bday/main.dart';
+import 'package:bday/storage/hive.dart';
+import 'package:bday/storage/hive_service.dart';
+import 'package:bday/storage/conservice.dart';
+import 'package:bday/themes/themeprovider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  late Directory tempDir;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() async {
+    tempDir = await Directory.systemTemp.createTemp('bday_test_');
+    Hive.init(tempDir.path);
+    await HiveBirthdayService.init();
+    await SettingsService.init();
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  tearDown(() async {
+    await Hive.deleteFromDisk();
+    if (await tempDir.exists()) {
+      await tempDir.delete(recursive: true);
+    }
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  Widget buildTestApp() {
+    return ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    );
+  }
+
+  testWidgets('shows the empty state when there are no birthdays',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('No Birthdays Yet'), findsOneWidget);
+  });
+
+  testWidgets('shows a saved birthday in the list',
+      (WidgetTester tester) async {
+    await HiveBirthdayService.addBirthday(
+      Birthday(name: 'Ada Lovelace', birthDate: DateTime(1990, 12, 10)),
+    );
+
+    await tester.pumpWidget(buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ada Lovelace'), findsOneWidget);
+    expect(find.text('No Birthdays Yet'), findsNothing);
   });
 }

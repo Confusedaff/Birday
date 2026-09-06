@@ -53,6 +53,10 @@ class _SearchWidgetState extends State<SearchWidget>
   /// Controller for the search text field.
   late TextEditingController _searchController;
 
+  /// Tracks whether the search field currently has keyboard focus, so the
+  /// bar can collapse again once the user taps away with no text entered.
+  late FocusNode _focusNode;
+
   /// Controller for the expand/collapse animation.
   late AnimationController _animationController;
 
@@ -66,6 +70,8 @@ class _SearchWidgetState extends State<SearchWidget>
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_handleSearchStateChange);
     _animationController = AnimationController(
       duration: AppConstants.animationDuration,
       vsync: this,
@@ -77,6 +83,8 @@ class _SearchWidgetState extends State<SearchWidget>
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleSearchStateChange);
+    _focusNode.dispose();
     _searchController.dispose();
     _animationController.dispose();
     super.dispose();
@@ -148,11 +156,9 @@ class _SearchWidgetState extends State<SearchWidget>
           Expanded(
             child: TextField(
               controller: _searchController,
+              focusNode: _focusNode,
               onChanged: (value) {
                 widget.onSearchChanged(value.toLowerCase());
-                _handleSearchStateChange();
-              },
-              onTap: () {
                 _handleSearchStateChange();
               },
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -185,6 +191,7 @@ class _SearchWidgetState extends State<SearchWidget>
                 onPressed: () {
                   _searchController.clear();
                   widget.onSearchChanged('');
+                  _focusNode.unfocus();
                   _handleSearchStateChange();
                 },
                 padding: EdgeInsets.zero,
@@ -225,21 +232,20 @@ class _SearchWidgetState extends State<SearchWidget>
   /// Handles transitions between search and normal modes.
   ///
   /// This method manages:
-  /// - Expanding/collapsing the search widget
+  /// - Expanding the search widget when focused or when text is entered
+  /// - Collapsing it again once focus is lost and no text remains
   /// - Starting/stopping the fade animation for the hint text
-  /// - Updating UI state
   void _handleSearchStateChange() {
-    final hasText = _searchController.text.isNotEmpty;
-    final shouldBeSearching = hasText || _searchController.text.isEmpty && _isSearching;
+    final shouldBeSearching =
+        _focusNode.hasFocus || _searchController.text.isNotEmpty;
 
-    if (shouldBeSearching && !_isSearching) {
+    if (shouldBeSearching == _isSearching) return;
+
+    setState(() => _isSearching = shouldBeSearching);
+    if (shouldBeSearching) {
       _animationController.forward();
-      setState(() => _isSearching = true);
-    } else if (!hasText && _isSearching && _searchController.text.isEmpty) {
-      // Keep searching mode active if field is focused
-      if (_searchController.text.isNotEmpty) {
-        return;
-      }
+    } else {
+      _animationController.reverse();
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:bday/storage/conservice.dart';
 import 'package:bday/storage/hive_service.dart';
+import 'package:bday/storage/notification.dart';
 import 'package:bday/themes/themeprovider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -108,9 +109,7 @@ class _SettingspageState extends State<Settingspage> {
                     size: 16,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
-                  onTap: () {
-                    // Handle notifications settings
-                  },
+                  onTap: () => _showComingSoon(context, "Notification settings"),
                 ),
                 _buildSettingsTile(
                   context,
@@ -122,9 +121,7 @@ class _SettingspageState extends State<Settingspage> {
                     size: 16,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
-                  onTap: () {
-                    // Handle language settings
-                  },
+                  onTap: () => _showComingSoon(context, "More languages"),
                 ),
               ],
             ),
@@ -146,9 +143,7 @@ class _SettingspageState extends State<Settingspage> {
                     size: 16,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
-                  onTap: () {
-                    // Handle backup settings
-                  },
+                  onTap: () => _showComingSoon(context, "Backup & Restore"),
                 ),
                 _buildSettingsTile(
                   context,
@@ -279,10 +274,22 @@ class _SettingspageState extends State<Settingspage> {
     );
   }
 
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature is coming in a future update'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
   Future<void> _deleteAllBirthdays() async {
   try {
     await HiveBirthdayService.clearAllBirthdays();
-    //widget.onDelete?.call();
+    // Old scheduled reminders reference birthdays that no longer exist -
+    // cancel them so they don't fire after the data has been cleared.
+    await NotiService().cancelAllNotifications();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -340,16 +347,6 @@ class _SettingspageState extends State<Settingspage> {
             onPressed: () {
               Navigator.pop(context);
               _deleteAllBirthdays();
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   SnackBar(
-              //     content: const Text('All data cleared'),
-              //     backgroundColor: Colors.red,
-              //     behavior: SnackBarBehavior.floating,
-              //     shape: RoundedRectangleBorder(
-              //       borderRadius: BorderRadius.circular(8),
-              //     ),
-              //   ),
-              // );
             },
             child: const Text(
               'Delete',

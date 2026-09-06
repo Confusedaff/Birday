@@ -228,6 +228,20 @@ class NotiService {
     }
   }
 
+  /// Cancels every scheduled notification managed by this app.
+  ///
+  /// Used when the user clears all birthday data - without this, previously
+  /// scheduled reminders would keep firing for birthdays that no longer
+  /// exist in the app.
+  Future<void> cancelAllNotifications() async {
+    try {
+      await notificationsPlugin.cancelAll();
+      AppLogger.info('Canceled all scheduled notifications');
+    } catch (e) {
+      AppLogger.error('Error canceling all notifications', error: e);
+    }
+  }
+
   /// Cancels all reminders for a birthday (deprecated).
   ///
   /// This method is deprecated - use the new safe ID generation in BirthdayReminder.
@@ -328,7 +342,11 @@ class NotiService {
         tzDate,
         _notificationDetails(),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+        // dayOfMonthAndTime repeats every MONTH on the same day (e.g. the
+        // 15th of every month), which is not what a "yearly" birthday
+        // reminder needs. dateAndTime matches month + day + time, so the
+        // notification correctly repeats once a year.
+        matchDateTimeComponents: DateTimeComponents.dateAndTime,
       );
       AppLogger.debug(
         'Scheduled yearly notification ID: $id for $scheduledDate',

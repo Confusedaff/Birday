@@ -4,12 +4,12 @@ import 'package:bday/storage/hive_service.dart';
 import 'package:bday/storage/hive.dart';
 
 class Copybd {
-  static Future<void> showTextImportDialog(BuildContext context) async {
+  static Future<void> showTextImportDialog(BuildContext outerContext) async {
     final TextEditingController textController = TextEditingController();
 
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: outerContext,
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Import Birthdays'),
         content: SingleChildScrollView(
@@ -43,7 +43,7 @@ class Copybd {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Theme.of(context)
+                  fillColor: Theme.of(dialogContext)
                       .colorScheme
                       .primaryContainer
                       .withValues(alpha: 0.1),
@@ -54,15 +54,19 @@ class Copybd {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () {
               String text = textController.text.trim();
               if (text.isNotEmpty) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                _importBirthdaysFromText(context, text);
+                // Close only this input dialog for now. `outerContext` -
+                // the context of whatever screen/sheet opened this dialog -
+                // is untouched by this pop and stays mounted, so it's what
+                // we use below to reliably report the import result.
+                Navigator.pop(dialogContext);
+                _importBirthdaysFromText(outerContext, text);
               }
             },
             child: const Text('Import'),
@@ -92,7 +96,7 @@ class Copybd {
       if (context.mounted) {
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: const [
@@ -105,7 +109,11 @@ class Copybd {
                 'Successfully imported ${importedBirthdays.length} birthday${importedBirthdays.length == 1 ? '' : 's'}!'),
             actions: [
               FilledButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  // Now that the result has been shown, close this dialog
+                  // and any remaining sheets underneath it in one go.
+                  Navigator.of(dialogContext).popUntil((route) => route.isFirst);
+                },
                 child: const Text('Great!'),
               ),
             ],
@@ -146,21 +154,15 @@ class Copybd {
 
          if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900) {
             DateTime birthDate = DateTime(year, month, day);
-            DateTime defaultAlarmDate = DateTime(
-              birthDate.year,
-              birthDate.month,
-              birthDate.day,
-              9,
-              0,
-            ).subtract(const Duration(days: 1));
+            // Default reminder time for imported birthdays: 9:00 AM.
+            const defaultAlarmHour = 9;
+            const defaultAlarmMinute = 0;
 
             final birthday = Birthday(
               name: name,
               birthDate: birthDate,
-              alarmDate: defaultAlarmDate,
-              alarmTimeHour: defaultAlarmDate.hour.toString(),
-              alarmTimeMinute: defaultAlarmDate.minute.toString(),
-              alarmId: DateTime.now().millisecondsSinceEpoch.toString(),
+              alarmTimeHour: defaultAlarmHour.toString(),
+              alarmTimeMinute: defaultAlarmMinute.toString(),
               isReminderEnabled: true,
             );
 

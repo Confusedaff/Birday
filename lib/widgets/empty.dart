@@ -1,3 +1,4 @@
+import 'package:bday/config/app_constants.dart';
 import 'package:flutter/material.dart';
 
 class Empty extends StatelessWidget {
@@ -23,17 +24,17 @@ class Empty extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
-            'No birthdays yet',
+            AppConstants.noBirthdaysYet,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            'Add your first birthday reminder',
+            AppConstants.addFirstBirthday,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),

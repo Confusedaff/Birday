@@ -2,7 +2,7 @@ import 'package:bday/storage/hive.dart';
 import 'package:bday/storage/hive_service.dart';
 import 'package:bday/widgets/button.dart';
 import 'package:bday/widgets/dateselector.dart';
-import 'package:bday/widgets/dragHandle.dart';
+import 'package:bday/widgets/draghandle.dart';
 import 'package:bday/widgets/remainder.dart';
 import 'package:bday/widgets/textfield.dart';
 import 'package:bday/widgets/timeselector.dart';
@@ -18,9 +18,7 @@ class Singlebday extends StatefulWidget {
 class _SinglebdayState extends State<Singlebday> {
   final TextEditingController nameController = TextEditingController();
   DateTime? birthDate;
-  DateTime? reminderDate;
   TimeOfDay? selectedAlarmTime;
-  DateTime? selectedAlarmDate;
   bool _isSaving = false;
 
   @override
@@ -46,8 +44,6 @@ class _SinglebdayState extends State<Singlebday> {
     final birthday = Birthday(
       name: nameController.text.trim(),
       birthDate: birthDate!,
-      alarmDate: selectedAlarmDate,
-      alarmId: selectedAlarmTime != null ? DateTime.now().millisecondsSinceEpoch.toString() : null,
       isReminderEnabled: selectedAlarmTime != null,
     );
     if (selectedAlarmTime != null) {
@@ -82,21 +78,6 @@ class _SinglebdayState extends State<Singlebday> {
   }
 }
 
-  Future<void> createYearlyAlarm(String alarmId) async {
-    if (selectedAlarmTime != null && selectedAlarmDate != null) {
-      // Your existing alarm creation logic
-      // final yearlyAlarm = TimeUtils.createYearlyAlarm(
-      //   id: alarmId,
-      //   time: selectedAlarmTime!,
-      //   specificDate: selectedAlarmDate!,
-      //   label: 'Birthday Reminder for ${nameController.text}',
-      // );
-      
-      // Save the alarm to your storage/database
-      // The alarm will now ring every year on the same date and time
-    }
-  }
-
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -116,26 +97,18 @@ class _SinglebdayState extends State<Singlebday> {
   }
 
   Future<void> _handleAlarmTimeTap(BuildContext currentContext) async {
-    final date = await showDatePicker(
-      context: currentContext,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
-    );
-
-    if (!mounted || date == null) return;
-
+    // Reminders recur yearly automatically on the birthday's own date, so
+    // only the time of day needs to be picked here - a separate date
+    // picker isn't needed and only added confusing, pointless friction.
     final time = await CustomTimePicker.showCustomTimePicker(
-      // ignore: use_build_context_synchronously
       context: currentContext,
-      helpText: 'Set Yearly Alarm Time',
+      helpText: 'Set Reminder Time',
     );
 
     if (!mounted || time == null) return;
 
     setState(() {
       selectedAlarmTime = time;
-      selectedAlarmDate = date;
     });
   }
 
@@ -215,21 +188,25 @@ class _SinglebdayState extends State<Singlebday> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 20),
+                  padding: const EdgeInsets.only(top: 8, bottom: 20, left: 16, right: 16),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Button(
-                        text: 'Cancel',
-                        tap: () {
-                          Navigator.of(context).popUntil((route) => route.isFirst);
-                        },
+                      Expanded(
+                        child: Button(
+                          text: 'Cancel',
+                          tap: () {
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
+                        ),
                       ),
-                      Button(
-                        text: _isSaving ? 'Saving...' : 'Add Birthday',
-                        tap: _isSaving ? null : () {
-                          _saveInput();
-                        },
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Button(
+                          text: _isSaving ? 'Saving...' : 'Add Birthday',
+                          tap: _isSaving ? null : () {
+                            _saveInput();
+                          },
+                        ),
                       ),
                     ],
                   ),
